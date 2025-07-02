@@ -1,0 +1,10 @@
+# Activate the virtual environment
+# Linux/macOS
+python3 -m venv .venv
+source .venv/bin/activate
+# Upgrade pip
+pip install --upgrade pip
+# Install required packages
+pip install pandas numpy matplotlib requests pandas_ta kiteconnect backtesting mplfinance pyotp selenium twilio watchdog dash
+# Verify installation
+pip list

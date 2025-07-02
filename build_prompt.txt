@@ -1,0 +1,39 @@
+
+
+you are expert in python and 
+
+I am asking you to create or reverse enginere a trading strategy with below logic. 
+I'll highlight the total call/put signals derived with technical indicatiors and I'll manually classify them in good or bad.
+
+1) I am finding the tradable Long/Short signals using indicatiors which are updated the the "Call" & "Put" columns in file "tradeview_utc_output.csv"
+2) However, with technical indicatiors alone there are many false or loss making signals if they are not around Support or Resistance.
+3) To filter them based on Price action, I am using CPR indicatior [Daily Pivot, Daily BC, Daily TC, Daily R1, Daily R2, Daily R3, Daily R4, Daily S1, Daily S2, Daily S3, Daily S4]
+3) Since I am using CPR levels Support and Resistances on index where the price movement is usually between the 2 Piviots, I am 
+considering the lower as support and above as resistance. 
+
+Trading Logic.
+
+
+I an creating the data for the ML to be trained upon. Please traverse thru all the dir in "./data/" subdir name would be
+for e.g. 2506 where 25 is data 06 is month. Read "tradeview_utc_output.csv" iteratively in all the sub directories and
+create a new file with all the rows with either "Call" or "Put" column = 1.
+
+Also, while creating new file just save these columns or features only = [datetime Daily Pivot	Daily BC	Daily TC	Daily R1	Daily R2	Daily R3	Daily R4	Daily S1	Daily S2	Daily S3	Daily S4	Prev Day High	Prev Day Low Call	Put]
+I am also attaching sample "tradeview_utc_output.csv" so that you can read all the features
+
+I'll explain what the data is about. I have creeated a dataset for 5 days of long signals which are been generated from
+technical indicators in past. If you look at the output column "Call_filtered" here I have marked manually 
+Profitable or tradable signals = 1 & Loss making signals as = 0
+
+Now about the input features. I am trying to filter them based on the price action and for that I am using CPR indicator.
+These are the CPR level of interest = [Daily Pivot, Daily BC, Daily TC, Daily R1, Daily R2, Daily R3, Daily R4, Daily S1, Daily S2, Daily S3, Daily S4]
+
+We should investigate, weather the [Daily Pivot, Daily BC, Daily] width of CPR band plays a role is clasifying good signals. 
+Or sucess rate of call is more when the price is above the CPR and Put is more when the price is below CPR.
+
+I can share some inputs, such as this CPR is not index. Typically, index moves between 2 or 3 levels of interests. 
+
+For example, if the price testing below levels which can act as support and above cpr level can act as resistance. If
+price is between [Daily R2, Daily R3] then R2 can act as Support and R3 as Resistance.
+
+Lets do some data analysis as well
