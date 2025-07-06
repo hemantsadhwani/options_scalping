@@ -1,0 +1,8 @@
+For a Call Reversal Trade:
+Check if the low of a lookback candle has entered the support band defined by Daily S1 and Prev Day Low.
+Check if the low of a lookback candle has entered the support band defined by Daily Pivot and Daily TC.
+If either of these is true, the trade PASSES.
+For a Put Reversal Trade:
+Check if the high of a lookback candle has entered the resistance band defined by Daily R1 and Prev Day High.
+Check if the high of a lookback candle has entered the resistance band defined by Daily Pivot and Daily BC.
+If either of these is true, the trade PASSES.

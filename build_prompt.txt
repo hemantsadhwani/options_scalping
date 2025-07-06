@@ -31,9 +31,26 @@ These are the CPR level of interest = [Daily Pivot, Daily BC, Daily TC, Daily R1
 We should investigate, weather the [Daily Pivot, Daily BC, Daily] width of CPR band plays a role is clasifying good signals. 
 Or sucess rate of call is more when the price is above the CPR and Put is more when the price is below CPR.
 
-I can share some inputs, such as this CPR is not index. Typically, index moves between 2 or 3 levels of interests. 
+
+
+I am sharing data - wants to build some rules which help increase profitable signals "target" output 1 (profit) & 0 (loss). 
+
+All these signals are derivative out of technical indicators. Now to filter them - i want to filter them using CPR or price action (support/resistance) using CPR [Daily Pivot	Daily BC	Daily TC	Daily R1	Daily R2	Daily R3	Daily R4	Daily S1	Daily S2	Daily S3	Daily S4	Prev Day High	Prev Day Low	prev_day_close]
+
+for example when price is moving from Daily Pivot to Daily R1, 
+1) Prices near the area of interest Daily Pivot/Daily TC are important for call
+2) When prices move from Daily Pivot towards Daily R1 then all the puts can be ignored until price reaches near Daily R1. Indicating possible bearish bias.
+3) We can take call trades if the price bounced from support and moving towards Daily R1.
+
+While I am sharing both "ml_put_data.csv" & "ml_call_data.csv" so that you know the total number of signals but for simprlicity we can keep building rules one at a time.
+
+Here what I observed I can share some inputs, such as this CPR is not index. Typically, index moves between 2 or 3 levels of interests. 
 
 For example, if the price testing below levels which can act as support and above cpr level can act as resistance. If
 price is between [Daily R2, Daily R3] then R2 can act as Support and R3 as Resistance.
 
-Lets do some data analysis as well
+Once you have analysed complete dataset and build initial hypothesis we can try refining same rules on day by day bases.
+
+Also to identify, if price has moved near to interest areas. For another example the price moving between [Daily S2 to Daily S3], 
+Daily S2 will act as resistance and Daily S3 as support. When price coming from support to resistance then (high) wick shall be considered.
+and when its is coming opposite use low wick  

@@ -10,7 +10,7 @@ def generate_final_analytics_report():
     This version correctly filters on 'type' and 'comments' columns.
     """
     base_data_dir = 'data'
-    output_dir = 'nifty_option_trading/backtesting'
+    output_dir = 'backtesting'
     report_output_file = os.path.join(output_dir, 'final_analytics_report.txt')
     
     os.makedirs(output_dir, exist_ok=True)
