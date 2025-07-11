@@ -1,0 +1,15 @@
+New "Call" (Buy) Strategy
+This strategy is essentially a two-step process. It doesn't just look for a condition; it waits for the market to "arm" a signal and then looks for a "trigger" to enter.
+1) Arming the Signal: The process begins when the Williams %R (28) line crosses up and over the -80 level. This indicates a potential shift from an oversold condition to an upward momentum. The system now enters a "waiting for confirmation" state (this is your CROSSOVER_80 = 1 flag).
+2) The Entry Trigger: While the signal is "armed," the system waits for the Williams %R (28) to continue its upward move and cross up and over the -50 level. This is the confirmation that the momentum is real. The trade is entered on the candle where this happens.
+3) Resetting and Invalidation: Once the signal is armed, there are two ways it can be turned off:
+    a) Successful Trade: After a trade is entered (Step 2), the system resets immediately (CROSSOVER_80 = 0). It will not look for another buy signal until the Williams %R drops and crosses above -80 again.
+    b) Signal Invalidation: If the signal is armed (it has crossed above -80) but it then falls back down below -80 before it has a chance to hit the -50 entry trigger, the signal is considered invalid. The system resets (CROSSOVER_80 = 0) and waits for a fresh "arming" signal.
+
+New "Put" (Sell) Strategy
+The logic for selling is a mirror image of the buying logic, designed to capture a shift from an overbought condition to downward momentum.
+1) Arming the Signal: The process begins when the Williams %R (28) line crosses down and under the -20 level. This suggests a potential move from overbought to downward momentum. The system enters a "waiting for confirmation" state for a sell (CROSSUNDER_20 = 1).
+2) The Entry Trigger: While the sell signal is "armed," the system waits for the Williams %R (28) to continue its downward move and cross down and under the -50 level. This confirms the downward momentum, and the sell trade is entered.
+3) Resetting and Invalidation:
+    a) Successful Trade: After a sell trade is entered, the system resets (CROSSUNDER_20 = 0) and will not look for another sell signal until the initial conditions are met again.
+    b) Signal Invalidation: If the signal is armed (it has crossed below -20) but it then rises back up above -20 before it has a chance to hit the -50 entry trigger, the sell signal is cancelled. The system resets (CROSSUNDER_20 = 0) and waits for a new opportunity.
