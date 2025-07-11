@@ -7,16 +7,28 @@ def apply_reversal_strategy_to_directory(date_dir_path):
     Applies the reversal strategy with consistent signal shifting.
     """
     input_file_for_calcs = os.path.join(date_dir_path, 'tradeview_utc.csv')
-    output_file_to_update = os.path.join(date_dir_path, 'tradeview_utc_output.csv')
+    output_file_to_update = os.path.join(date_dir_path, 'tradeview_rev_output.csv')
 
     print(f"\n--- Applying Reversal Strategy in: {date_dir_path} ---")
 
-    if not os.path.exists(input_file_for_calcs) or not os.path.exists(output_file_to_update):
-        print(f"⚠️  Warning: Missing input or output file in {date_dir_path}. Skipping.")
+    # Check if input file exists
+    if not os.path.exists(input_file_for_calcs):
+        print(f"⚠️  Warning: Missing input file in {date_dir_path}. Skipping.")
         return
 
     df = pd.read_csv(input_file_for_calcs, parse_dates=['datetime'])
-    output_df = pd.read_csv(output_file_to_update, parse_dates=['datetime'], index_col='datetime')
+    
+    # Load or create the output file
+    if os.path.exists(output_file_to_update):
+        output_df = pd.read_csv(output_file_to_update, parse_dates=['datetime'], index_col='datetime')
+    else:
+        # Create new output file if it doesn't exist (without comments columns)
+        output_df = df[['datetime', 'open', 'high', 'low', 'close', 'Daily Pivot', 'Daily BC', 'Daily TC', 
+                        'Daily R1', 'Daily R2', 'Daily R3', 'Daily R4', 'Daily S1', 'Daily S2', 
+                        'Daily S3', 'Daily S4', 'Prev Day High', 'Prev Day Low']].copy()
+        output_df.set_index('datetime', inplace=True)
+        output_df['Call'] = 0
+        output_df['Put'] = 0
 
     # --- Calculations using integer index ---
     df.rename(columns={'%R': 'williamsRFast', '%R.1': 'williamsRSlow', 'K': 'stochRSIK', 'D': 'stochRSID'}, inplace=True)
@@ -76,7 +88,7 @@ def apply_reversal_strategy_to_directory(date_dir_path):
     df['callEntrySignal'] = df['bullishCrossover'] & (~df['bullishCrossover'].shift(1, fill_value=False))
     df['putEntrySignal'] = df['bearishCrossover'] & (~df['bearishCrossover'].shift(1, fill_value=False))
 
-    # --- IMPROVED SIGNAL SHIFTING LOGIC ---
+    # --- CORRECTED SIGNAL TIMING LOGIC ---
     # Create a mapping from index to datetime for easier reference
     index_to_datetime = dict(zip(range(len(df)), df['datetime']))
     
@@ -84,31 +96,21 @@ def apply_reversal_strategy_to_directory(date_dir_path):
     call_signal_indices = df[df['callEntrySignal']].index.tolist()
     put_signal_indices = df[df['putEntrySignal']].index.tolist()
     
-    # Get the next candle's datetime for each signal
+    # Get the current candle's datetime for each signal
     call_signal_times = []
     put_signal_times = []
     
     for idx in call_signal_indices:
-        if idx + 1 < len(df):
-            call_signal_times.append(index_to_datetime[idx + 1])
-            print(f"Call signal at {index_to_datetime[idx]} -> Trade at {index_to_datetime[idx + 1]}")
+        call_signal_times.append(index_to_datetime[idx])
+        print(f"Call signal at {index_to_datetime[idx]} -> Trade at {index_to_datetime[idx]}")
     
     for idx in put_signal_indices:
-        if idx + 1 < len(df):
-            put_signal_times.append(index_to_datetime[idx + 1])
-            print(f"Put signal at {index_to_datetime[idx]} -> Trade at {index_to_datetime[idx + 1]}")
+        put_signal_times.append(index_to_datetime[idx])
+        print(f"Put signal at {index_to_datetime[idx]} -> Trade at {index_to_datetime[idx]}")
 
     # Apply signals to the output DataFrame
     output_df.loc[call_signal_times, 'Call'] = 1
     output_df.loc[put_signal_times, 'Put'] = 1
-    
-    # Update comments
-    output_df.loc[call_signal_times, 'Call Comments'] = output_df.loc[call_signal_times, 'Call Comments'].apply(
-        lambda x: 'Reversal' if pd.isna(x) or x == '' else f"{x};Reversal"
-    )
-    output_df.loc[put_signal_times, 'Put Comments'] = output_df.loc[put_signal_times, 'Put Comments'].apply(
-        lambda x: 'Reversal' if pd.isna(x) or x == '' else f"{x};Reversal"
-    )
 
     # Save the updated output
     output_df.to_csv(output_file_to_update, index=True)

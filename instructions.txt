@@ -1,3 +1,0 @@
-Save NSE_NIFTY.csv
-python data_prep.py 
-Change date in data.config

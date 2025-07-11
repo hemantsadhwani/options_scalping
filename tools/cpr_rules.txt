@@ -1,0 +1,44 @@
+Here are the precise rules for CPR filtering:
+
+For a Call Trade:
+
+S1/PDL Support Zone:
+Bottom of zone = min(Daily S1, Prev Day low) 
+Top of zone = max(Daily S1, Prev Day Low) + proximity_pct
+Call Trade PASSES if any candle's LOW enters "Support Zone", regardless of trend direction.
+This zone acts as a support level for price, making it a valid area for call reversals.
+
+R1/PDH Support Zone:
+Bottom of zone = min(Daily R1, Prev Day High)
+Top of zone = max(Daily R1, Prev Day High) + proximity_pct
+Call Trade PASSES if any candle's LOW enters this zone AND price is falling.
+This zone acts as a support level when price is falling.
+
+Pivot/TC Support Zone:
+Bottom of zone = Daily Pivot
+Top of zone = Daily TC + proximity_pct
+Call Trade PASSES if any candle's LOW enters this zone AND price is falling.
+
+For a Put Trade:
+
+R1/PDH Resistance Zone:
+Bottom of zone = min(Daily R1, Prev Day High) - proximity_pct
+Top of zone = max(Daily R1, Prev Day High)
+Put Trade PASSES if any candle's HIGH enters "R1/PDH Resistance Zone", regardless of trend direction.
+This zone acts as a resistance level for price, making it a valid area for put reversals.
+
+S1/PDL Resistance Zone:
+Bottom of zone = min(Daily S1, Prev Day Low) - proximity_pct
+Top of zone = max(Daily S1, Prev Day Low)
+Put Trade PASSES if any candle's HIGH enters this zone AND price is rising.
+This zone acts as a resistance level when price is rising.
+
+Pivot/BC Resistance Zone:
+Bottom of zone = Daily BC - proximity_pct
+Top of zone = Daily Pivot
+Put Trade PASSES if any candle's HIGH enters this zone AND price is rising.
+
+Note: 
+- proximity_pct is set to 0.03 (3%) to create wider bands that help catch price bouncing or rejecting
+- For primary zones (S1/PDL for Calls, R1/PDH for Puts), trend direction is not required as these are strong support/resistance areas
+- For secondary zones, trend direction confirmation is required to validate the trade

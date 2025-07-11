@@ -11,7 +11,7 @@ def apply_continuation_strategy_to_directory(date_dir_path):
     signals are consistently shifted to the next candle.
     """
     input_file = os.path.join(date_dir_path, 'tradeview_utc.csv')
-    output_file = os.path.join(date_dir_path, 'tradeview_utc_output.csv')
+    output_file = os.path.join(date_dir_path, 'tradeview_cont_output.csv')
 
     print(f"\n--- Applying Continuation Strategy in: {date_dir_path} ---")
 
@@ -80,17 +80,15 @@ def apply_continuation_strategy_to_directory(date_dir_path):
     if os.path.exists(output_file):
         output_df = pd.read_csv(output_file, parse_dates=['datetime'], index_col='datetime')
     else:
-        # Create a new output DataFrame if the file doesn't exist
+        # Create a new output DataFrame if the file doesn't exist (without comments columns)
         output_df = df[['datetime', 'open', 'high', 'low', 'close', 'Daily Pivot', 'Daily BC', 'Daily TC', 
                         'Daily R1', 'Daily R2', 'Daily R3', 'Daily R4', 'Daily S1', 'Daily S2', 
                         'Daily S3', 'Daily S4', 'Prev Day High', 'Prev Day Low']].copy()
         output_df.set_index('datetime', inplace=True)
         output_df['Call'] = 0
         output_df['Put'] = 0
-        output_df['Call Comments'] = ''
-        output_df['Put Comments'] = ''
     
-    # --- IMPROVED N+1 LOGIC: Consistent with run_rev_strategy.py ---
+    # --- CORRECTED SIGNAL TIMING LOGIC ---
     # Create a mapping from index to datetime for easier reference
     index_to_datetime = dict(zip(range(len(df)), df['datetime']))
     
@@ -98,34 +96,21 @@ def apply_continuation_strategy_to_directory(date_dir_path):
     call_signal_indices = df[df['callEntrySignal']].index.tolist()
     put_signal_indices = df[df['putEntrySignal']].index.tolist()
     
-    # Get the next candle's datetime for each signal
+    # Get the current candle's datetime for each signal
     call_signal_times = []
     put_signal_times = []
     
     for idx in call_signal_indices:
-        if idx + 1 < len(df):
-            call_signal_times.append(index_to_datetime[idx + 1])
-            print(f"Call signal at {index_to_datetime[idx]} -> Trade at {index_to_datetime[idx + 1]}")
+        call_signal_times.append(index_to_datetime[idx])
+        print(f"Call signal at {index_to_datetime[idx]} -> Trade at {index_to_datetime[idx]}")
     
     for idx in put_signal_indices:
-        if idx + 1 < len(df):
-            put_signal_times.append(index_to_datetime[idx + 1])
-            print(f"Put signal at {index_to_datetime[idx]} -> Trade at {index_to_datetime[idx + 1]}")
+        put_signal_times.append(index_to_datetime[idx])
+        print(f"Put signal at {index_to_datetime[idx]} -> Trade at {index_to_datetime[idx]}")
 
     # Apply signals to the output DataFrame
     output_df.loc[call_signal_times, 'Call'] = 1
     output_df.loc[put_signal_times, 'Put'] = 1
-    
-    # Update comments
-    for time in call_signal_times:
-        if time in output_df.index:
-            current_comment = output_df.loc[time, 'Call Comments']
-            output_df.loc[time, 'Call Comments'] = 'Continuation' if pd.isna(current_comment) or current_comment == '' else f"{current_comment};Continuation"
-    
-    for time in put_signal_times:
-        if time in output_df.index:
-            current_comment = output_df.loc[time, 'Put Comments']
-            output_df.loc[time, 'Put Comments'] = 'Continuation' if pd.isna(current_comment) or current_comment == '' else f"{current_comment};Continuation"
 
     output_df.to_csv(output_file, index=True)
     print(f"✅ Continuation strategy output saved to {output_file}")

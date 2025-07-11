@@ -1,4 +1,4 @@
-# nifty_option_trading/run_ml_data_prep.py (Corrected)
+# nifty_option_trading/run_ml_data_prep.py (Merged)
 
 import os
 import pandas as pd
@@ -6,10 +6,10 @@ import glob
 import numpy as np
 from datetime import timedelta, time
 
-def run_data_enrichment(data_dir, output_file):
+def run_data_enrichment(data_dir, output_dir):
     """
-    Iterates through MMDD directories to create a single, enriched data file
-    for machine learning, dropping rows with no valid target.
+    Iterates through MMDD directories to create two final, enriched data files
+    (one for calls, one for puts) for machine learning, dropping rows with no valid target.
     """
     # Find all MMDD subdirectories
     mmdd_dirs = glob.glob(os.path.join(data_dir, '*/'))
@@ -28,7 +28,7 @@ def run_data_enrichment(data_dir, output_file):
 
         # Define file paths for the current directory
         backtest_file = os.path.join(dir_path, 'backtest_results.csv')
-        market_data_file = os.path.join(dir_path, 'tradeview_utc_output.csv')
+        market_data_file = os.path.join(dir_path, 'tradeview_utc_cpr.csv')
         close_file = os.path.join(dir_path, 'close.txt')
 
         # Check that all three required files exist
@@ -106,13 +106,13 @@ def run_data_enrichment(data_dir, output_file):
             print(f"  - Error: Failed to process files in {dir_name}. Reason: {e}")
 
     if not all_enriched_dfs:
-        print("\nNo data was processed. No output file created.")
+        print("\nNo data was processed. No output files created.")
         return
 
     # 6. Combine all dataframes
     final_df = pd.concat(all_enriched_dfs, ignore_index=True)
     
-    # *** CHANGE IS HERE: Drop rows where 'target' is blank/NaN ***
+    # Drop rows where 'target' is blank/NaN
     rows_before_dropping = len(final_df)
     final_df.dropna(subset=['target'], inplace=True)
     rows_after_dropping = len(final_df)
@@ -139,12 +139,24 @@ def run_data_enrichment(data_dir, output_file):
     
     print(f"\nDropped specified columns. Final columns are: {final_df.columns.to_list()}")
     
-    # 7. Save the final, cleaned dataframe
-    final_df.to_csv(output_file, index=False)
-    print("\n--- Enrichment Complete ---")
-    print(f"Successfully created '{output_file}'")
-    print(f"Final data shape: {final_df.shape}")
-    print(f"Total rows from all directories: {len(final_df)}")
+    # 7. Split the data and save to separate files
+    print("\n--- Splitting Data and Saving Final Files ---")
+    
+    # Filter the DataFrame for 'Call' and 'Put' types
+    call_df = final_df[final_df['type'] == 'Call']
+    put_df = final_df[final_df['type'] == 'Put']
+
+    # Define output file paths
+    call_output_file = os.path.join(output_dir, 'ml_call_data.csv')
+    put_output_file = os.path.join(output_dir, 'ml_put_data.csv')
+
+    # Save the filtered DataFrames to new CSV files
+    call_df.to_csv(call_output_file, index=False)
+    put_df.to_csv(put_output_file, index=False)
+
+    print(f"Successfully created '{os.path.basename(call_output_file)}' with {len(call_df)} rows.")
+    print(f"Successfully created '{os.path.basename(put_output_file)}' with {len(put_df)} rows.")
+    print("\n--- Enrichment and Splitting Complete ---")
 
 
 if __name__ == '__main__':
@@ -152,12 +164,11 @@ if __name__ == '__main__':
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     DATA_DIRECTORY = os.path.join(PROJECT_ROOT, 'data') 
     
-    # --- Define the NEW Output Directory and File Path ---
+    # --- Define the NEW Output Directory ---
     OUTPUT_DIR = os.path.join(PROJECT_ROOT, 'ml_train_data')
-    OUTPUT_CSV_FILE = os.path.join(OUTPUT_DIR, 'ml_data_enriched.csv')
     
     # --- Create the output directory if it doesn't exist ---
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     
     # --- Run the main function ---
-    run_data_enrichment(DATA_DIRECTORY, OUTPUT_CSV_FILE)
+    run_data_enrichment(DATA_DIRECTORY, OUTPUT_DIR)
