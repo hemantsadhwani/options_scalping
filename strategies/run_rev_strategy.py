@@ -34,7 +34,7 @@ def apply_reversal_strategy_to_directory(date_dir_path):
     df.rename(columns={'%R': 'williamsRFast', '%R.1': 'williamsRSlow', 'K': 'stochRSIK', 'D': 'stochRSID'}, inplace=True)
     def crossover(s1, s2): return (s1 > s2) & (s1.shift(1) <= s2.shift(1))
     def crossunder(s1, s2): return (s1 < s2) & (s1.shift(1) >= s2.shift(1))
-    WAIT_BULL_BARS_WILLIAMS, WAIT_BEAR_BARS_WILLIAMS = 4, 4
+    WAIT_BULL_BARS_WILLIAMS, WAIT_BEAR_BARS_WILLIAMS = 4, 5
     WAIT_BULL_BARS_STOCH, WAIT_BEAR_BARS_STOCH = 2, 2
     threshold_80, threshold_20 = pd.Series(-80, index=df.index), pd.Series(-20, index=df.index)
     df['williamsRFastBullishCrossover'], df['williamsRSlowBullishCrossover'] = crossover(df['williamsRFast'], threshold_80), crossover(df['williamsRSlow'], threshold_80)

@@ -12,6 +12,9 @@ def run_backtest(signals_df, calls_df, puts_df, date_str, config, strategy_name,
     
     eod_hour, eod_minute = map(int, config['EOD_EXIT_TIME'].split(':'))
     eod_exit_time = time(eod_hour, eod_minute)
+    
+    last_entry_hour, last_entry_minute = map(int, config['LAST_ENTRY_TIME'].split(':'))
+    last_entry_time = time(last_entry_hour, last_entry_minute)
 
     # The dataframes are now expected to have a pre-formatted datetime column.
     # We can set the index directly.
@@ -22,6 +25,9 @@ def run_backtest(signals_df, calls_df, puts_df, date_str, config, strategy_name,
     daily_trades = []
 
     for timestamp, signal_row in signals_df.iterrows():
+        if timestamp.time() > last_entry_time:
+            continue
+
         trade_type_map = {call_col: 'Call', put_col: 'Put'}
         for signal_col, trade_type in trade_type_map.items():
             if signal_row.get(signal_col, 0) == 1:

@@ -1,6 +1,6 @@
 # config.yaml
 
-EOD_EXIT_TIME: '15:29'
+EOD_EXIT_TIME: '15:14'
 LAST_ENTRY_TIME: '15:00' # New setting: Don't take trades after 3 PM
 
 # --- STRATEGY CONFIGURATION ---

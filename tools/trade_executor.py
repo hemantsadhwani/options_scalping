@@ -7,7 +7,9 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "pandas_ta"])
     import pandas_ta as ta
 
-def execute_trades(signals_df, prices_df, signal_col, trade_type):
+from datetime import time
+
+def execute_trades(signals_df, prices_df, signal_col, trade_type, config):
     """
     Executes trades based on signals and a slabbed ATR trailing stop loss strategy.
     """
@@ -16,6 +18,9 @@ def execute_trades(signals_df, prices_df, signal_col, trade_type):
     STALL_BAR_COUNT = 14
     SLAB_THRESHOLDS = [10.0, 20.0, 50.0] 
     SLAB_MULTIPLIERS = [1.8, 2.2, 2.5] 
+
+    last_entry_hour, last_entry_minute = map(int, config['LAST_ENTRY_TIME'].split(':'))
+    last_entry_time = time(last_entry_hour, last_entry_minute)
 
     signals_df['datetime'] = pd.to_datetime(signals_df['datetime'])
     prices_df['datetime'] = pd.to_datetime(prices_df['datetime'])
@@ -28,6 +33,9 @@ def execute_trades(signals_df, prices_df, signal_col, trade_type):
     trade_results = []
 
     for index, signal in valid_signals.iterrows():
+        if signal['datetime'].time() > last_entry_time:
+            continue
+
         entry_time = signal['datetime'] + pd.Timedelta(minutes=1)
         if entry_time not in prices_df.index:
             continue

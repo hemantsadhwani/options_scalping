@@ -42,6 +42,11 @@ def run_analysis():
 
     print(f"--- Generating Analytics Reports for {len(dates)} Dates ---")
 
+    all_dates_summary = []
+    total_trades_cpr = {"Continuation": 0, "Reversal v1": 0, "Reversal v2": 0}
+    total_wins_cpr = {"Continuation": 0, "Reversal v1": 0, "Reversal v2": 0}
+    total_pnl_cpr = {"Continuation": 0.0, "Reversal v1": 0.0, "Reversal v2": 0.0}
+
     for date in dates:
         date_dir = os.path.join(data_root, date)
         
@@ -86,6 +91,11 @@ def run_analysis():
             # Trades CPR
             trades, wr, pl = get_trade_analytics(os.path.join(date_dir, 'trades_crp', f'{trade_file_key}_trades.csv'))
             analytics_data[strat_name]['Trades CPR (Trades/WR%/P&L)'] = f"{trades} / {wr:.2f}% / {pl:.2f}"
+            
+            # Accumulate totals for the final summary
+            total_trades_cpr[strat_name] += trades
+            total_wins_cpr[strat_name] += int(trades * (wr / 100))
+            total_pnl_cpr[strat_name] += pl
 
         # --- Formatting ---
         headers = ["Metric", "Continuation", "Reversal v1", "Reversal v2"]
@@ -98,6 +108,10 @@ def run_analysis():
         for metric in metrics:
             row = [metric] + [analytics_data[strat][metric] for strat in ["Continuation", "Reversal v1", "Reversal v2"]]
             table.append(row)
+        
+        # Add the summary row for the current date to the list
+        summary_row = [date] + [analytics_data[strat]['Trades CPR (Trades/WR%/P&L)'] for strat in ["Continuation", "Reversal v1", "Reversal v2"]]
+        all_dates_summary.append(summary_row)
             
         report_str = f"--- Analytics Report for Date: {date} ---\n\n"
         report_str += tabulate(table, headers=headers, tablefmt="grid")
@@ -111,8 +125,30 @@ def run_analysis():
         except IOError as e:
             print(f"  ✗ ERROR saving report for {date}: {e}")
 
-if __name__ == "__main__":
-    run_analysis()
+    # --- Final Summary Report ---
+    final_report_path = os.path.join('./backtesting', 'final_analytics_report.txt')
+    
+    # Calculate total win rates
+    total_wr_cpr = {
+        strat: (total_wins_cpr[strat] / total_trades_cpr[strat] * 100) if total_trades_cpr[strat] > 0 else 0.0
+        for strat in total_trades_cpr
+    }
+    
+    # Format the total summary row
+    total_summary_row = ["Total"] + [
+        f"{total_trades_cpr[strat]} / {total_wr_cpr[strat]:.2f}% / {total_pnl_cpr[strat]:.2f}"
+        for strat in ["Continuation", "Reversal v1", "Reversal v2"]
+    ]
+    
+    final_report_str = "--- Final Analytics Summary ---\n\n"
+    final_report_str += tabulate(all_dates_summary + [total_summary_row], headers=["Date", "Continuation", "Reversal v1", "Reversal v2"], tablefmt="grid")
+    
+    try:
+        with open(final_report_path, 'w') as f:
+            f.write(final_report_str)
+        print(f"\n✅ Final analytics report saved to {final_report_path}")
+    except IOError as e:
+        print(f"\n  ✗ ERROR saving final report: {e}")
 
 if __name__ == "__main__":
     run_analysis()

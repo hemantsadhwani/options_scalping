@@ -76,10 +76,10 @@ def apply_reversal_strategy_to_directory_v2(date_dir_path):
             crossover_80_flag = 0
 
         # 3. Entry Trigger: Cross above -50 when armed
-        elif crossover_80_flag == 1 and prev_wr <= -50 and curr_wr > -50 and next_time:
-            # Signal on next candle
-            if next_time in output_df.index:
-                output_df.loc[next_time, 'Call_v2'] = 1
+        elif crossover_80_flag == 1 and prev_wr <= -50 and curr_wr > -50:
+            # Signal on current candle
+            if current_time in output_df.index:
+                output_df.loc[current_time, 'Call_v2'] = 1
             crossover_80_flag = 0
 
         # --- Put Logic ---
@@ -92,10 +92,10 @@ def apply_reversal_strategy_to_directory_v2(date_dir_path):
             crossunder_20_flag = 0
 
         # 3. Entry Trigger: Cross below -50 when armed
-        elif crossunder_20_flag == 1 and prev_wr >= -50 and curr_wr < -50 and next_time:
-            # Signal on next candle
-            if next_time in output_df.index:
-                output_df.loc[next_time, 'Put_v2'] = 1
+        elif crossunder_20_flag == 1 and prev_wr >= -50 and curr_wr < -50:
+            # Signal on current candle
+            if current_time in output_df.index:
+                output_df.loc[current_time, 'Put_v2'] = 1
             crossunder_20_flag = 0
 
     # Save the updated output

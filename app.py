@@ -23,7 +23,7 @@ run_step_1 = True       # Step 1: Process raw data
 run_step_2 = True       # Step 2: Generate continuation signals
 run_step_3 = True       # Step 3: Generate first reversal signals
 run_step_3_2 = True     # Step 3.2: Generate second reversal signals
-run_step_temp = True    # Step Temp: Filter CPR band signals
+run_step_temp = False    # Step Temp: Filter CPR band signals
 run_step_4 = True        # Step 4: Run backtest on raw signals
 run_step_5 = True        # Step 5: Run CPR filter on raw signals
 run_step_6 = True        # Step 6: Run backtest on CPR-filtered signals
@@ -296,21 +296,21 @@ def main():
                 all_trades = []
 
                 # Execute trades for reversal signals
-                rev_v1_call_trades = execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call', 'Call')
+                rev_v1_call_trades = execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call', 'Call', config)
                 all_trades.append(rev_v1_call_trades)
-                rev_v1_put_trades = execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put', 'Put')
+                rev_v1_put_trades = execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put', 'Put', config)
                 all_trades.append(rev_v1_put_trades)
 
                 # Execute trades for reversal v2 signals
-                rev_v2_call_trades = execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_v2', 'Call')
+                rev_v2_call_trades = execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_v2', 'Call', config)
                 all_trades.append(rev_v2_call_trades)
-                rev_v2_put_trades = execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_v2', 'Put')
+                rev_v2_put_trades = execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_v2', 'Put', config)
                 all_trades.append(rev_v2_put_trades)
 
                 # Execute trades for continuation signals
-                cont_call_trades = execute_trades(cont_signals_df.copy(), calls_df.copy(), 'Call', 'Call')
+                cont_call_trades = execute_trades(cont_signals_df.copy(), calls_df.copy(), 'Call', 'Call', config)
                 all_trades.append(cont_call_trades)
-                cont_put_trades = execute_trades(cont_signals_df.copy(), puts_df.copy(), 'Put', 'Put')
+                cont_put_trades = execute_trades(cont_signals_df.copy(), puts_df.copy(), 'Put', 'Put', config)
                 all_trades.append(cont_put_trades)
 
                 # Combine and save results
@@ -356,21 +356,21 @@ def main():
                 all_trades = []
 
                 # Execute trades for reversal signals (CPR)
-                rev_v1_call_trades = execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_crp', 'Call')
+                rev_v1_call_trades = execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_crp', 'Call', config)
                 all_trades.append(rev_v1_call_trades)
-                rev_v1_put_trades = execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_crp', 'Put')
+                rev_v1_put_trades = execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_crp', 'Put', config)
                 all_trades.append(rev_v1_put_trades)
 
                 # Execute trades for reversal v2 signals (CPR)
-                rev_v2_call_trades = execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_v2_crp', 'Call')
+                rev_v2_call_trades = execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_v2_crp', 'Call', config)
                 all_trades.append(rev_v2_call_trades)
-                rev_v2_put_trades = execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_v2_crp', 'Put')
+                rev_v2_put_trades = execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_v2_crp', 'Put', config)
                 all_trades.append(rev_v2_put_trades)
 
                 # Execute trades for continuation signals (CPR)
-                cont_call_trades = execute_trades(cont_signals_df.copy(), calls_df.copy(), 'Call_crp', 'Call')
+                cont_call_trades = execute_trades(cont_signals_df.copy(), calls_df.copy(), 'Call_crp', 'Call', config)
                 all_trades.append(cont_call_trades)
-                cont_put_trades = execute_trades(cont_signals_df.copy(), puts_df.copy(), 'Put_crp', 'Put')
+                cont_put_trades = execute_trades(cont_signals_df.copy(), puts_df.copy(), 'Put_crp', 'Put', config)
                 all_trades.append(cont_put_trades)
 
                 # Combine and save results

@@ -17,7 +17,8 @@ This zone acts as a support level when price is falling.
 Pivot/TC Support Zone:
 Bottom of zone = Daily Pivot
 Top of zone = Daily TC + proximity_pct
-Call Trade PASSES if any candle's LOW enters this zone AND price is falling.
+Call Trade PASSES if any candle's LOW enters this zone, regardless of trend direction.
+This zone acts as a support level for price, making it a valid area for call reversals.
 
 For a Put Trade:
 
@@ -36,9 +37,27 @@ This zone acts as a resistance level when price is rising.
 Pivot/BC Resistance Zone:
 Bottom of zone = Daily BC - proximity_pct
 Top of zone = Daily Pivot
-Put Trade PASSES if any candle's HIGH enters this zone AND price is rising.
+Put Trade PASSES if any candle's HIGH enters this zone, regardless of trend direction.
+This zone acts as a resistance level for price, making it a valid area for put reversals.
+
+Extended Support/Resistance Zones:
+
+R2/R3/R4 Resistance or Support Zones (irrespective of price direction):
+Bottom of zone = Daily R2/Daily R3/Daily R4 - proximity_pct
+Top of zone = Daily R2/Daily R3/Daily R4 + proximity_pct
+These zones act as resistance & support levels for high or low of price, making them valid areas for put or call reversals.
+- For Put trades: Check if candle's HIGH is within any of these zones
+- For Call trades: Check if candle's LOW is within any of these zones
+
+S2/S3/S4 Resistance or Support Zones (irrespective of price direction):
+Bottom of zone = Daily S2/Daily S3/Daily S4 - proximity_pct
+Top of zone = Daily S2/Daily S3/Daily S4 + proximity_pct
+These zones act as resistance & support levels for high or low of price, making them valid areas for put or call reversals.
+- For Put trades: Check if candle's HIGH is within any of these zones
+- For Call trades: Check if candle's LOW is within any of these zones
 
 Note: 
 - proximity_pct is set to 0.03 (3%) to create wider bands that help catch price bouncing or rejecting
-- For primary zones (S1/PDL for Calls, R1/PDH for Puts), trend direction is not required as these are strong support/resistance areas
-- For secondary zones, trend direction confirmation is required to validate the trade
+- For primary zones (S1/PDL for Calls, R1/PDH for Puts), trend direction is not required
+- For secondary zones (R1/PDH for Calls, S1/PDL for Puts), trend direction confirmation is required
+- For extended zones (R2/R3/R4 and S2/S3/S4), trend direction is not required as they act as both support and resistance
