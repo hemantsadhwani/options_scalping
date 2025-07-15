@@ -31,19 +31,22 @@ def run_cpr_filter(price_df, signals_df, trade_type_map):
     for signal_col in trade_type_map.keys():
         signals_df[f'{signal_col}_crp'] = 0
 
-    def check_extended_zone(price, level_val, proximity_pct, level_name, trade_time):
-        """Check if price is within the extended zone of a given level."""
+    def check_extended_zone(candle_low, candle_high, level_val, proximity_pct, level_name, trade_time):
+        """Check if candle's HIGH or LOW is within the extended zone of a given level."""
         if pd.isna(level_val):
             return False
         zone_bottom = level_val * (1 - proximity_pct / 100)
         zone_top = level_val * (1 + proximity_pct / 100)
-        is_in_zone = zone_bottom <= price <= zone_top
+        low_in_zone = zone_bottom <= candle_low <= zone_top
+        high_in_zone = zone_bottom <= candle_high <= zone_top
+        is_in_zone = low_in_zone or high_in_zone
         
         if trade_time.strftime('%Y-%m-%d %H:%M:%S') == '2025-07-02 09:25:00':
             print(f"\nDEBUG: {level_name} Zone Check")
             print(f"Level value: {level_val:.2f}")
             print(f"Zone bottom: {zone_bottom:.2f}")
             print(f"Zone top: {zone_top:.2f}")
+            print(f"Low in zone: {low_in_zone}, High in zone: {high_in_zone}")
             print(f"Price in zone: {is_in_zone}")
         
         return is_in_zone
@@ -110,15 +113,17 @@ def run_cpr_filter(price_df, signals_df, trade_type_map):
 
             passed = False
             if trade_type_val == 'Call':
-                price = exact_candle['low'].values[0]
+                candle_low = exact_candle['low'].values[0]
+                candle_high = exact_candle['high'].values[0]
                 if trade_time.strftime('%Y-%m-%d %H:%M:%S') == '2025-07-02 09:25:00':
                     print(f"\nDEBUG: Call Trade Price Check")
-                    print(f"Low price at 9:25: {price:.2f}")
+                    print(f"Low price at 9:25: {candle_low:.2f}")
+                    print(f"High price at 9:25: {candle_high:.2f}")
                     print(f"S1: {s1_val:.2f}, PDL: {pdl_val:.2f}")
                     print(f"Price is rising: {price_is_rising}")
                     print(f"Price is falling: {price_is_falling}")
 
-                # Check S1/PDL zone regardless of trend direction
+                # Check S1/PDL zone regardless of trend direction (only check LOW for primary zones)
                 if not pd.isna(s1_val) and not pd.isna(pdl_val):
                     zone_bottom = min(s1_val, pdl_val)
                     zone_top = max(s1_val, pdl_val) * (1 + proximity_pct / 100)
@@ -126,53 +131,55 @@ def run_cpr_filter(price_df, signals_df, trade_type_map):
                         print(f"\nDEBUG: S1/PDL Zone Check")
                         print(f"Zone bottom: {zone_bottom:.2f}")
                         print(f"Zone top: {zone_top:.2f}")
-                        print(f"Price in zone: {zone_bottom <= price <= zone_top}")
-                    if zone_bottom <= price <= zone_top:
+                        print(f"Price in zone: {zone_bottom <= candle_low <= zone_top}")
+                    if zone_bottom <= candle_low <= zone_top:
                         passed = True
 
-                # Check extended support zones (S2/S3/S4) regardless of trend
+                # Check extended support zones (S2/S3/S4) - check both HIGH and LOW
                 if not passed:
                     for level_val, level_name in [(s2_val, 'S2'), (s3_val, 'S3'), (s4_val, 'S4')]:
-                        if check_extended_zone(price, level_val, proximity_pct, level_name, trade_time):
+                        if check_extended_zone(candle_low, candle_high, level_val, proximity_pct, level_name, trade_time):
                             if trade_time.strftime('%Y-%m-%d %H:%M:%S') == '2025-07-02 09:25:00':
                                 print(f"Call Trade PASSED due to {level_name} zone")
                             passed = True
                             break
 
-                # Check extended resistance zones (R2/R3/R4) regardless of trend
+                # Check extended resistance zones (R2/R3/R4) - check both HIGH and LOW
                 if not passed:
                     for level_val, level_name in [(r2_val, 'R2'), (r3_val, 'R3'), (r4_val, 'R4')]:
-                        if check_extended_zone(price, level_val, proximity_pct, level_name, trade_time):
+                        if check_extended_zone(candle_low, candle_high, level_val, proximity_pct, level_name, trade_time):
                             if trade_time.strftime('%Y-%m-%d %H:%M:%S') == '2025-07-02 09:25:00':
                                 print(f"Call Trade PASSED due to {level_name} zone")
                             passed = True
                             break
 
-                # Check Pivot/TC zone regardless of trend direction
+                # Check Pivot/TC zone regardless of trend direction (only check LOW for primary zones)
                 if not passed and not pd.isna(pivot_val) and not pd.isna(tc_val):
                     zone_bottom = pivot_val
                     zone_top = tc_val * (1 + proximity_pct / 100)
-                    if zone_bottom <= price <= zone_top:
+                    if zone_bottom <= candle_low <= zone_top:
                         passed = True
 
-                # Only check R1/PDH zone if price is falling
+                # Only check R1/PDH zone if price is falling (only check LOW for primary zones)
                 if not passed and price_is_falling:
                     if not pd.isna(r1_val) and not pd.isna(pdh_val):
                         zone_bottom = min(r1_val, pdh_val)
                         zone_top = max(r1_val, pdh_val) * (1 + proximity_pct / 100)
-                        if zone_bottom <= price <= zone_top:
+                        if zone_bottom <= candle_low <= zone_top:
                             passed = True
 
             else:  # Put Trade
-                price = exact_candle['high'].values[0]
+                candle_low = exact_candle['low'].values[0]
+                candle_high = exact_candle['high'].values[0]
                 if trade_time.strftime('%Y-%m-%d %H:%M:%S') == '2025-07-02 09:25:00':
                     print(f"\nDEBUG: Put Trade Price Check")
-                    print(f"High price at 9:25: {price:.2f}")
+                    print(f"High price at 9:25: {candle_high:.2f}")
+                    print(f"Low price at 9:25: {candle_low:.2f}")
                     print(f"R1: {r1_val:.2f}, PDH: {pdh_val:.2f}")
                     print(f"Price is rising: {price_is_rising}")
                     print(f"Price is falling: {price_is_falling}")
 
-                # Check R1/PDH zone regardless of trend direction
+                # Check R1/PDH zone regardless of trend direction (only check HIGH for primary zones)
                 if not pd.isna(r1_val) and not pd.isna(pdh_val):
                     zone_bottom = min(r1_val, pdh_val) * (1 - proximity_pct / 100)
                     zone_top = max(r1_val, pdh_val)
@@ -180,29 +187,29 @@ def run_cpr_filter(price_df, signals_df, trade_type_map):
                         print(f"\nDEBUG: R1/PDH Zone Check")
                         print(f"Zone bottom: {zone_bottom:.2f}")
                         print(f"Zone top: {zone_top:.2f}")
-                        print(f"Price in zone: {zone_bottom <= price <= zone_top}")
-                    if zone_bottom <= price <= zone_top:
+                        print(f"Price in zone: {zone_bottom <= candle_high <= zone_top}")
+                    if zone_bottom <= candle_high <= zone_top:
                         passed = True
 
-                # Check extended resistance zones (R2/R3/R4) regardless of trend
+                # Check extended resistance zones (R2/R3/R4) - check both HIGH and LOW
                 if not passed:
                     for level_val, level_name in [(r2_val, 'R2'), (r3_val, 'R3'), (r4_val, 'R4')]:
-                        if check_extended_zone(price, level_val, proximity_pct, level_name, trade_time):
+                        if check_extended_zone(candle_low, candle_high, level_val, proximity_pct, level_name, trade_time):
                             if trade_time.strftime('%Y-%m-%d %H:%M:%S') == '2025-07-02 09:25:00':
                                 print(f"Put Trade PASSED due to {level_name} zone")
                             passed = True
                             break
 
-                # Check extended support zones (S2/S3/S4) regardless of trend
+                # Check extended support zones (S2/S3/S4) - check both HIGH and LOW
                 if not passed:
                     for level_val, level_name in [(s2_val, 'S2'), (s3_val, 'S3'), (s4_val, 'S4')]:
-                        if check_extended_zone(price, level_val, proximity_pct, level_name, trade_time):
+                        if check_extended_zone(candle_low, candle_high, level_val, proximity_pct, level_name, trade_time):
                             if trade_time.strftime('%Y-%m-%d %H:%M:%S') == '2025-07-02 09:25:00':
                                 print(f"Put Trade PASSED due to {level_name} zone")
                             passed = True
                             break
 
-                # Check Pivot/BC zone regardless of trend direction
+                # Check Pivot/BC zone regardless of trend direction (only check HIGH for primary zones)
                 if not passed and not pd.isna(pivot_val) and not pd.isna(bc_val):
                     zone_bottom = bc_val * (1 - proximity_pct / 100)
                     zone_top = pivot_val
@@ -211,16 +218,16 @@ def run_cpr_filter(price_df, signals_df, trade_type_map):
                         print(f"Price is rising: {price_is_rising}")
                         print(f"Zone bottom: {zone_bottom:.2f}")
                         print(f"Zone top: {zone_top:.2f}")
-                        print(f"Price in zone: {zone_bottom <= price <= zone_top}")
-                    if zone_bottom <= price <= zone_top:
+                        print(f"Price in zone: {zone_bottom <= candle_high <= zone_top}")
+                    if zone_bottom <= candle_high <= zone_top:
                         passed = True
 
-                # Only check S1/PDL zone if price is rising
+                # Only check S1/PDL zone if price is rising (only check HIGH for primary zones)
                 if not passed and price_is_rising:
                     if not pd.isna(s1_val) and not pd.isna(pdl_val):
                         zone_bottom = min(s1_val, pdl_val) * (1 - proximity_pct / 100)
                         zone_top = max(s1_val, pdl_val)
-                        if zone_bottom <= price <= zone_top:
+                        if zone_bottom <= candle_high <= zone_top:
                             passed = True
 
             if passed:

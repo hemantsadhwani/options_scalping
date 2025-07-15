@@ -1,0 +1,5 @@
+Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High
+2025-06-30 09:24:00,229.0,2025-06-30 09:28:00,241.0,12.0,5.24%,Quick TP,Call Option (Hybrid Premium),210.68,210.68,244.65
+2025-06-30 10:55:00,187.65,2025-06-30 11:18:00,172.64,-15.01,-8.00%,SL Hit,Call Option (Hybrid Premium),172.64,172.64,191.45
+2025-06-30 11:24:00,181.35,2025-06-30 11:57:00,180.75,-0.6,-0.33%,Williams28 Exit,Call Option (Hybrid Premium),166.84,166.84,190.85
+2025-06-30 12:28:00,128.00,2025-06-30 12:39:00,140.00,12.00,9.38%,Quick TP,Put Option (Hybrid Premium),117.76,117.76,146.35

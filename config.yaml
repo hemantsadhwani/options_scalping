@@ -1,21 +1,9 @@
 # config.yaml
+# Global application configuration
 
+# --- TIMING CONFIGURATION ---
 EOD_EXIT_TIME: '15:14'
 LAST_ENTRY_TIME: '15:00' # New setting: Don't take trades after 3 PM
 
-# --- STRATEGY CONFIGURATION ---
-# Choose one: 'FIXED_POINTS' or 'PERCENTAGE'
-STRATEGY_TYPE: 'PERCENTAGE' 
-
-FIXED_POINTS:
-  TAKE_PROFIT_POINTS: 12
-  # Choose one: 'SWING_LOW', 'FIXED', 'PERCENTAGE'
-  STOP_LOSS_TYPE: 'FIXED' 
-  SWING_LOW_PERIOD: 5 # Number of bars to look back for swing low
-  STOP_LOSS_POINTS: 6 # Used if STOP_LOSS_TYPE is 'FIXED'
-
-PERCENTAGE:
-  TAKE_PROFIT_PERCENT: 7
-  # Choose one: 'SWING_LOW', 'FIXED', 'PERCENTAGE'
-  STOP_LOSS_TYPE: 'PERCENTAGE'
-  STOP_LOSS_PERCENT: 7
+# Note: Trade execution parameters have been moved to option_tools/trade_config.yaml
+# for better organization and modularity

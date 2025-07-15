@@ -1,0 +1,31 @@
+STRATEGY_TYPE: 'HYBRID_PREMIUM'
+HYBRID_PREMIUM:
+  SL_PERCENT: 6.0
+  PREMIUM_TIERS:
+    LOW:
+      threshold: 100
+      sl_percent: 15.0
+      atr_mult: 2.0
+      breakeven_delay: 0
+      trail_start_pct: 10.0
+    MED:
+      threshold: 250
+      sl_percent: 8.0
+      atr_mult: 2.5
+      breakeven_delay: 2
+      trail_start_pct: 15.0
+    HIGH:
+      threshold: .inf  # Use .inf for infinity in YAML
+      sl_percent: 7.0
+      atr_mult: 4.0
+      breakeven_delay: 2
+      trail_start_pct: 15.0
+  BREAKEVEN_MOVE_PCT: 20.0
+  STALL_CANDLES: 10
+  STALL_THRESHOLD_PCT: 1.5
+  QUICK_TP_POINTS: 12
+  ATR_PERIOD: 5
+  WILLIAMS28_CROSS_UNDER: -80
+  WILLIAMS9_CROSS_UNDER: -80
+  STOCH_OVERSOLD: 20
+  USE_STOCH_FADE_FOR_TP: true

@@ -103,8 +103,15 @@ def process_option_file(option_dir_path, expected_date, option_type):
 
     try:
         df = pd.read_csv(input_file)
+        
+        # Manually rename duplicate columns
+        cols = pd.Series(df.columns)
+        for dup in cols[cols.duplicated()].unique():
+            cols[cols[cols == dup].index.values.tolist()] = [f"{dup}.{i}" if i != 0 else dup for i in range(sum(cols == dup))]
+        df.columns = cols
+        
     except Exception as e:
-        print(f"❌ Error reading file '{input_file}': {e}")
+        print(f"❌ Error reading or processing file '{input_file}': {e}")
         return
 
     if 'time' not in df.columns:
@@ -130,12 +137,15 @@ def process_option_file(option_dir_path, expected_date, option_type):
         print(f"⚠️  Warning: No {option_type.upper()} records found for {expected_date} in '{input_file}'.")
         return
 
-    output_columns = ['datetime', 'open', 'high', 'low', 'close', 'K', 'D', '%R']
+    # Define the desired columns, including the renamed duplicate
+    output_columns = ['datetime', 'open', 'high', 'low', 'close', 'K', 'D', '%R', '%R.1']
     
     existing_output_columns = [col for col in output_columns if col in df.columns]
     missing_cols = set(output_columns) - set(existing_output_columns)
     if missing_cols:
-        print(f"⚠️  Warning: Missing required columns in '{input_file}': {', '.join(missing_cols)}")
+        # Only warn if a column other than '%R.1' is missing, as it might not always be present
+        if missing_cols - {'%R.1'}:
+            print(f"⚠️  Warning: Missing required columns in '{input_file}': {', '.join(missing_cols - {'%R.1'})}")
 
     if 'datetime' not in existing_output_columns:
         print(f"❌ Error: 'datetime' column could not be created or is missing. Cannot proceed.")
@@ -195,6 +205,6 @@ def run_process_data():
             except ValueError:
                 print(f"\n⚠️  Skipping '{dir_name}': Not a valid DDMM date format.")
         else:
-            print(f"\n⚠️  Skipping '{dir_name}': Does not match DDMM format.")
+            print(f"⚠️  Skipping '{dir_name}': Does not match DDMM format.")
     
     print(f"\n🎉 All done. Processed {processed_count} directories.")

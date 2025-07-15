@@ -1,0 +1,11 @@
+Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High
+2025-07-01 09:46:00,129.45,2025-07-01 09:47:00,121.10,-8.35,-6.45%,Williams28 Exit,Put Option (Hybrid Premium),119.09,119.09,133.00
+2025-07-01 09:52:00,117.75,2025-07-01 09:59:00,113.85,-3.90,-3.31%,Williams28 Exit,Put Option (Hybrid Premium),108.33,108.33,128.35
+2025-07-01 10:02:00,127.95,2025-07-01 10:29:00,120.80,-7.15,-5.59%,Williams28 Exit,Put Option (Hybrid Premium),117.71,117.71,137.85
+2025-07-01 10:43:00,123.50,2025-07-01 11:03:00,135.50,12.00,9.72%,Quick TP,Put Option (Hybrid Premium),113.62,113.62,140.40
+2025-07-01 11:23:00,129.20,2025-07-01 11:57:00,141.20,12.00,9.29%,Quick TP,Put Option (Hybrid Premium),118.86,118.86,147.10
+2025-07-01 12:29:00,122.00,2025-07-01 12:34:00,120.20,-1.80,-1.48%,Williams28 Exit,Put Option (Hybrid Premium),112.24,112.24,123.00
+2025-07-01 12:45:00,121.00,2025-07-01 13:35:00,120.00,-1.00,-0.83%,Williams28 Exit,Put Option (Hybrid Premium),111.32,111.32,125.70
+2025-07-01 13:44:00,119.60,2025-07-01 14:01:00,118.70,-0.90,-0.75%,Williams28 Exit,Put Option (Hybrid Premium),110.03,110.03,126.55
+2025-07-01 14:17:00,110.10,2025-07-01 14:54:00,111.75,1.65,1.50%,Williams28 Exit,Put Option (Hybrid Premium),101.29,101.29,118.85
+2025-07-01 14:58:00,112.85,2025-07-01 15:03:00,109.85,-3.00,-2.66%,Williams28 Exit,Put Option (Hybrid Premium),103.82,103.82,113.90

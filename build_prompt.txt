@@ -1,1 +1,13 @@
-can you help me improvising the way we give input and save output to the run_s1r1_crp_filter.py. Since the standard input file "tradeview_utc_output.csv" is converted into "tradeview_rev_output.csv" & "tradeview_cont_output.csv". Check if files exists use them as input one by one. Also, instead of creating the new or intermediate output please make all the filtered call and put signals from 1 to 0 in "tradeview_rev_output.csv" & "tradeview_cont_output.csv".  for "tradeview_rev_output.csv" you must check Call/Call_v2 & Put/Put_v2
+I am trying to improve ./option_tools/option_trade_executor.py so going step by step. I have updated the code with ./option_tppls/trade_rules.txt (these are my trade managemant rules).
+Also, ive current implemented the trade_rules.txt ./optio_tools/option_trade_executor.py & ./option_tools/trade_config.yaml
+
+I am currently focusing on improving the ./data/1407/. instead changing the app.py better to write shall test file which 
+reads call/put signals from ./data/0307/tradeview_rev_output.csv "Call_crp" & "Put_crp" and take respective trades+next candle on ./data/0307/call/call_out.csv
+and ./data/0307/put/put_out.csv. This should generate ./data/0307/trades_crp/rev_v1_trades.csv. 
+
+Core objective is to create a test file which can use attached files to improve or build profitable strategy using trade_rules.txt inplemented in option_trade_executor.py
+
+Current rev_v1_trades.csv is hugely loss making 
+
+
+

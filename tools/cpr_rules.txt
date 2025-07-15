@@ -46,15 +46,15 @@ R2/R3/R4 Resistance or Support Zones (irrespective of price direction):
 Bottom of zone = Daily R2/Daily R3/Daily R4 - proximity_pct
 Top of zone = Daily R2/Daily R3/Daily R4 + proximity_pct
 These zones act as resistance & support levels for high or low of price, making them valid areas for put or call reversals.
-- For Put trades: Check if candle's HIGH is within any of these zones
-- For Call trades: Check if candle's LOW is within any of these zones
+- For Put trades: Check if candle's HIGH or LOW is within any of these zones
+- For Call trades: Check if candle's LOW or HIGH is within any of these zones
 
 S2/S3/S4 Resistance or Support Zones (irrespective of price direction):
 Bottom of zone = Daily S2/Daily S3/Daily S4 - proximity_pct
 Top of zone = Daily S2/Daily S3/Daily S4 + proximity_pct
 These zones act as resistance & support levels for high or low of price, making them valid areas for put or call reversals.
-- For Put trades: Check if candle's HIGH is within any of these zones
-- For Call trades: Check if candle's LOW is within any of these zones
+- For Put trades: Check if candle's HIGH or LOW is within any of these zones
+- For Call trades: Check if candle's LOW or HIGH is within any of these zones
 
 Note: 
 - proximity_pct is set to 0.03 (3%) to create wider bands that help catch price bouncing or rejecting

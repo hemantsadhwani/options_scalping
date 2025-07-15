@@ -1,0 +1,10 @@
+Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High
+2025-07-07 09:21:00,156.25,2025-07-07 09:31:00,143.75,-12.50,-8.00%,SL Hit,Call Option (Hybrid Premium),143.75,143.75,169.35
+2025-07-07 10:34:00,157.65,2025-07-07 10:38:00,145.04,-12.61,-8.00%,SL Hit,Call Option (Hybrid Premium),145.04,145.04,157.65
+2025-07-07 11:43:00,155.40,2025-07-07 11:46:00,148.10,-7.30,-4.70%,Williams28 Exit,Call Option (Hybrid Premium),142.97,142.97,155.40
+2025-07-07 12:21:00,142.75,2025-07-07 12:48:00,143.80,1.05,0.74%,Williams28 Exit,Call Option (Hybrid Premium),131.33,131.33,152.20
+2025-07-07 12:53:00,147.80,2025-07-07 12:56:00,142.70,-5.10,-3.45%,Williams28 Exit,Call Option (Hybrid Premium),135.98,135.98,148.25
+2025-07-07 13:09:00,141.60,2025-07-07 13:20:00,153.60,12.00,8.47%,Quick TP,Call Option (Hybrid Premium),130.27,130.27,157.40
+2025-07-07 13:46:00,152.70,2025-07-07 13:52:00,144.20,-8.50,-5.57%,Williams28 Exit,Call Option (Hybrid Premium),140.48,140.48,155.70
+2025-07-07 13:56:00,152.40,2025-07-07 14:30:00,151.40,-1.00,-0.66%,Williams28 Exit,Call Option (Hybrid Premium),140.21,140.21,161.85
+2025-07-07 14:57:00,146.35,2025-07-07 15:29:00,153.50,7.15,4.89%,End of Data,Call Option (Hybrid Premium),134.64,134.64,155.25

@@ -1,0 +1,4 @@
+Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High
+2025-07-03 10:09:00,149.65,2025-07-03 10:14:00,137.68,-11.97,-8.00%,SL Hit,Call Option (Hybrid Premium),137.68,137.68,157.45
+2025-07-03 10:41:00,158.95,2025-07-03 10:46:00,146.23,-12.72,-8.00%,SL Hit,Call Option (Hybrid Premium),146.23,146.23,160.35
+2025-07-03 11:19:00,155.60,2025-07-03 11:27:00,167.60,12.00,7.71%,Quick TP,Call Option (Hybrid Premium),143.15,143.15,176.15

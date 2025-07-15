@@ -32,7 +32,7 @@ def get_trade_analytics(file_path):
     except pd.errors.EmptyDataError:
         return 0, 0.0, 0.0
 
-def run_analysis():
+def run_analysis(base_dir_prefix='', cont_signals_filename='tradeview_cont_output.csv', rev_signals_filename='tradeview_rev_output.csv', backtest_folder='backtest', backtest_crp_folder='backtest_crp', trades_folder='trades', trades_crp_folder='trades_crp', analytics_filename_prefix='analytics_'):
     data_root = './data'
     dates = sorted([d for d in os.listdir(data_root) if os.path.isdir(os.path.join(data_root, d))])
 
@@ -42,17 +42,17 @@ def run_analysis():
 
     print(f"--- Generating Analytics Reports for {len(dates)} Dates ---")
 
-    all_dates_summary = []
+    per_date_stats = {}
     total_trades_cpr = {"Continuation": 0, "Reversal v1": 0, "Reversal v2": 0}
     total_wins_cpr = {"Continuation": 0, "Reversal v1": 0, "Reversal v2": 0}
     total_pnl_cpr = {"Continuation": 0.0, "Reversal v1": 0.0, "Reversal v2": 0.0}
 
     for date in dates:
-        date_dir = os.path.join(data_root, date)
+        date_dir = os.path.join(data_root, date, base_dir_prefix)
         
         # --- File Paths ---
-        cont_signals_file = os.path.join(date_dir, 'tradeview_cont_output.csv')
-        rev_signals_file = os.path.join(date_dir, 'tradeview_rev_output.csv')
+        cont_signals_file = os.path.join(date_dir, cont_signals_filename)
+        rev_signals_file = os.path.join(date_dir, rev_signals_filename)
 
         # --- Data Collection ---
         analytics_data = {
@@ -71,31 +71,41 @@ def run_analysis():
             analytics_data[strat]['Signals (Call/Put)'] = f"{get_signal_counts(file, call_col)} / {get_signal_counts(file, put_col)}"
             analytics_data[strat]['CPR Signals (Call/Put)'] = f"{get_signal_counts(file, f'{call_col}_crp')} / {get_signal_counts(file, f'{put_col}_crp')}"
 
+        # Store raw numeric values for calculations
+        raw_trades_data = {}
+        
         # Backtest & Trade Execution Stats
         for strat_name, strat_key in [("Continuation", "cont"), ("Reversal v1", "rev"), ("Reversal v2", "rev_v2")]:
-            # Backtest Raw
-            trades, wr, _ = get_trade_analytics(os.path.join(date_dir, 'backtest', f'backtest_results_{strat_key}.csv'))
+        # Backtest Raw
+            trades, wr, _ = get_trade_analytics(os.path.join(date_dir, backtest_folder, f'backtest_results_{strat_key}.csv'))
             analytics_data[strat_name]['Backtest Raw (Trades/WR%)'] = f"{trades} / {wr:.2f}%"
             
             # Backtest CPR
-            trades, wr, _ = get_trade_analytics(os.path.join(date_dir, 'backtest_crp', f'backtest_results_{strat_key}.csv'))
+            trades, wr, _ = get_trade_analytics(os.path.join(date_dir, backtest_crp_folder, f'backtest_results_{strat_key}.csv'))
             analytics_data[strat_name]['Backtest CPR (Trades/WR%)'] = f"{trades} / {wr:.2f}%"
 
             # Determine the correct trade file key
             trade_file_key = 'rev_v1' if strat_key == 'rev' else strat_key
 
             # Trades Raw
-            trades, wr, pl = get_trade_analytics(os.path.join(date_dir, 'trades', f'{trade_file_key}_trades.csv'))
+            trades, wr, pl = get_trade_analytics(os.path.join(date_dir, trades_folder, f'{trade_file_key}_trades.csv'))
             analytics_data[strat_name]['Trades Raw (Trades/WR%/P&L)'] = f"{trades} / {wr:.2f}% / {pl:.2f}"
 
-            # Trades CPR
-            trades, wr, pl = get_trade_analytics(os.path.join(date_dir, 'trades_crp', f'{trade_file_key}_trades.csv'))
-            analytics_data[strat_name]['Trades CPR (Trades/WR%/P&L)'] = f"{trades} / {wr:.2f}% / {pl:.2f}"
+            # Trades CPR - Store both formatted string and raw values
+            trades_cpr, wr_cpr, pl_cpr = get_trade_analytics(os.path.join(date_dir, trades_crp_folder, f'{trade_file_key}_trades.csv'))
+            analytics_data[strat_name]['Trades CPR (Trades/WR%/P&L)'] = f"{trades_cpr} / {wr_cpr:.2f}% / {pl_cpr:.2f}"
+            
+            # Store raw numeric values for calculations
+            raw_trades_data[strat_name] = {
+                'trades': trades_cpr,
+                'wr': wr_cpr,
+                'pl': pl_cpr
+            }
             
             # Accumulate totals for the final summary
-            total_trades_cpr[strat_name] += trades
-            total_wins_cpr[strat_name] += int(trades * (wr / 100))
-            total_pnl_cpr[strat_name] += pl
+            total_trades_cpr[strat_name] += trades_cpr
+            total_wins_cpr[strat_name] += int(trades_cpr * (wr_cpr / 100))
+            total_pnl_cpr[strat_name] += pl_cpr
 
         # --- Formatting ---
         headers = ["Metric", "Continuation", "Reversal v1", "Reversal v2"]
@@ -109,15 +119,39 @@ def run_analysis():
             row = [metric] + [analytics_data[strat][metric] for strat in ["Continuation", "Reversal v1", "Reversal v2"]]
             table.append(row)
         
-        # Add the summary row for the current date to the list
-        summary_row = [date] + [analytics_data[strat]['Trades CPR (Trades/WR%/P&L)'] for strat in ["Continuation", "Reversal v1", "Reversal v2"]]
-        all_dates_summary.append(summary_row)
+        # --- CPR Width Calculation ---
+        cpr_width = "N/A"
+        try:
+            utc_df = pd.read_csv(os.path.join(date_dir, 'tradeview_utc.csv'))
+            if not utc_df.empty:
+                daily_tc = utc_df['Daily TC'].iloc[0]
+                daily_bc = utc_df['Daily BC'].iloc[0]
+                if pd.notna(daily_tc) and pd.notna(daily_bc):
+                    cpr_width = f"{daily_tc - daily_bc:.2f}"
+        except FileNotFoundError:
+            pass # File might not exist, width will remain "N/A"
+
+        # Store raw stats for the date, only if there are any trades
+        total_trades_for_date = raw_trades_data['Continuation']['trades'] + raw_trades_data['Reversal v1']['trades'] + raw_trades_data['Reversal v2']['trades']
+        if total_trades_for_date > 0:
+            per_date_stats[date] = {
+                'cpr_width': cpr_width,
+                'cont_trades': raw_trades_data['Continuation']['trades'], 
+                'cont_wins': int(raw_trades_data['Continuation']['trades'] * (raw_trades_data['Continuation']['wr'] / 100)), 
+                'cont_pnl': raw_trades_data['Continuation']['pl'],
+                'rev1_trades': raw_trades_data['Reversal v1']['trades'], 
+                'rev1_wins': int(raw_trades_data['Reversal v1']['trades'] * (raw_trades_data['Reversal v1']['wr'] / 100)), 
+                'rev1_pnl': raw_trades_data['Reversal v1']['pl'],
+                'rev2_trades': raw_trades_data['Reversal v2']['trades'], 
+                'rev2_wins': int(raw_trades_data['Reversal v2']['trades'] * (raw_trades_data['Reversal v2']['wr'] / 100)), 
+                'rev2_pnl': raw_trades_data['Reversal v2']['pl'],
+            }
             
         report_str = f"--- Analytics Report for Date: {date} ---\n\n"
         report_str += tabulate(table, headers=headers, tablefmt="grid")
         
         # --- Save to File ---
-        report_path = os.path.join(date_dir, f'analytics_{date}.txt')
+        report_path = os.path.join(date_dir, f'{analytics_filename_prefix}{date}.txt')
         try:
             with open(report_path, 'w') as f:
                 f.write(report_str)
@@ -126,29 +160,5 @@ def run_analysis():
             print(f"  ✗ ERROR saving report for {date}: {e}")
 
     # --- Final Summary Report ---
-    final_report_path = os.path.join('./backtesting', 'final_analytics_report.txt')
-    
-    # Calculate total win rates
-    total_wr_cpr = {
-        strat: (total_wins_cpr[strat] / total_trades_cpr[strat] * 100) if total_trades_cpr[strat] > 0 else 0.0
-        for strat in total_trades_cpr
-    }
-    
-    # Format the total summary row
-    total_summary_row = ["Total"] + [
-        f"{total_trades_cpr[strat]} / {total_wr_cpr[strat]:.2f}% / {total_pnl_cpr[strat]:.2f}"
-        for strat in ["Continuation", "Reversal v1", "Reversal v2"]
-    ]
-    
-    final_report_str = "--- Final Analytics Summary ---\n\n"
-    final_report_str += tabulate(all_dates_summary + [total_summary_row], headers=["Date", "Continuation", "Reversal v1", "Reversal v2"], tablefmt="grid")
-    
-    try:
-        with open(final_report_path, 'w') as f:
-            f.write(final_report_str)
-        print(f"\n✅ Final analytics report saved to {final_report_path}")
-    except IOError as e:
-        print(f"\n  ✗ ERROR saving final report: {e}")
-
-if __name__ == "__main__":
-    run_analysis()
+    # Return the raw per-date stats and the totals
+    return per_date_stats
