@@ -86,6 +86,11 @@ def apply_reversal_strategy_to_directory_v2(date_dir_path):
         # 1. Arming the signal: Cross below -20
         if crossunder_20_flag == 0 and prev_wr >= -20 and curr_wr < -20:
             crossunder_20_flag = 1
+            # If trigger is also met on the same candle, fire signal
+            if prev_wr >= -50 and curr_wr < -50:
+                if current_time in output_df.index:
+                    output_df.loc[current_time, 'Put_v2'] = 1
+                crossunder_20_flag = 0 # Reset after firing
 
         # 2. Invalidation: Cross back above -20 before confirmation
         elif crossunder_20_flag == 1 and prev_wr <= -20 and curr_wr > -20:

@@ -1,11 +1,10 @@
-Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High
-2025-06-27 09:54:00,154.80,2025-06-27 09:57:00,142.42,-12.38,-8.00%,SL Hit,Call Option (Hybrid Premium),142.42,142.42,158.25
-2025-06-27 10:05:00,149.40,2025-06-27 10:26:00,144.30,-5.10,-3.41%,Williams28 Exit,Call Option (Hybrid Premium),137.45,137.45,162.55
-2025-06-27 10:34:00,152.40,2025-06-27 10:35:00,142.60,-9.80,-6.43%,Williams28 Exit,Call Option (Hybrid Premium),140.21,140.21,152.90
-2025-06-27 10:44:00,145.25,2025-06-27 10:54:00,157.25,12.00,8.26%,Quick TP,Call Option (Hybrid Premium),133.63,133.63,160.80
-2025-06-27 11:31:00,163.20,2025-06-27 11:45:00,159.25,-3.95,-2.42%,Williams28 Exit,Call Option (Hybrid Premium),150.14,150.14,166.20
-2025-06-27 11:48:00,164.00,2025-06-27 11:49:00,159.25,-4.75,-2.90%,Williams28 Exit,Call Option (Hybrid Premium),150.88,150.88,164.10
-2025-06-27 12:00:00,166.30,2025-06-27 12:21:00,178.30,12.00,7.22%,Quick TP,Call Option (Hybrid Premium),153.00,153.00,186.00
-2025-06-27 13:30:00,173.20,2025-06-27 13:53:00,167.55,-5.65,-3.26%,Williams28 Exit,Call Option (Hybrid Premium),159.34,159.34,177.65
-2025-06-27 13:57:00,172.50,2025-06-27 14:22:00,171.00,-1.50,-0.87%,Williams28 Exit,Call Option (Hybrid Premium),158.70,158.70,182.40
-2025-06-27 14:43:00,173.50,2025-06-27 15:07:00,167.90,-5.60,-3.23%,Williams28 Exit,Call Option (Hybrid Premium),159.62,159.62,181.75
+Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High,Big Move
+2025-06-27 09:54:00,154.80,2025-06-27 09:57:00,141.15,-13.65,-8.82%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),145.51,145.51,158.25,False
+2025-06-27 10:05:00,149.40,2025-06-27 10:15:00,159.40,10.00,6.69%,Fixed TP (Average Signal),Call Option (Enhanced Hybrid Premium),140.44,140.44,162.55,False
+2025-06-27 10:34:00,152.40,2025-06-27 10:35:00,142.60,-9.80,-6.43%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),143.26,143.26,152.90,False
+2025-06-27 10:44:00,145.25,2025-06-27 10:47:00,155.25,10.00,6.88%,Fixed TP (Average Signal),Call Option (Enhanced Hybrid Premium),136.53,145.25,155.85,False
+2025-06-27 11:31:00,163.20,2025-06-27 11:45:00,159.25,-3.95,-2.42%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),153.41,153.41,166.20,False
+2025-06-27 11:48:00,164.00,2025-06-27 11:49:00,159.25,-4.75,-2.90%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),154.16,154.16,164.10,False
+2025-06-27 12:00:00,166.30,2025-06-27 12:18:00,176.30,10.00,6.01%,Fixed TP (Average Signal),Call Option (Enhanced Hybrid Premium),156.32,156.32,186.00,False
+2025-06-27 13:30:00,173.20,2025-06-27 13:53:00,167.55,-5.65,-3.26%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),162.81,162.81,177.65,False
+2025-06-27 13:57:00,172.50,2025-06-27 15:09:00,162.15,-10.35,-6.00%,SL Hit,Call Option (Enhanced Hybrid Premium),162.15,162.15,182.40,True

@@ -1,8 +1,8 @@
-Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High
-2025-07-14 09:45:00,176.35,2025-07-14 09:53:00,188.35,12.00,6.80%,Quick TP,Call Option (Hybrid Premium),162.24,162.24,196.50
-2025-07-14 10:57:00,181.95,2025-07-14 10:58:00,170.30,-11.65,-6.40%,Williams28 Exit,Call Option (Hybrid Premium),167.39,167.39,181.95
-2025-07-14 11:03:00,175.95,2025-07-14 11:06:00,169.65,-6.30,-3.58%,Williams28 Exit,Call Option (Hybrid Premium),161.87,161.87,176.00
-2025-07-14 11:49:00,149.40,2025-07-14 12:26:00,143.05,-6.35,-4.25%,Williams28 Exit,Call Option (Hybrid Premium),137.45,137.45,156.45
-2025-07-14 12:31:00,149.75,2025-07-14 12:54:00,143.15,-6.60,-4.41%,Williams28 Exit,Call Option (Hybrid Premium),137.77,137.77,155.60
-2025-07-14 13:18:00,140.85,2025-07-14 13:24:00,152.85,12.00,8.52%,Quick TP,Call Option (Hybrid Premium),129.58,129.58,154.55
-2025-07-14 14:08:00,142.55,2025-07-14 14:51:00,154.55,12.00,8.42%,Quick TP,Call Option (Hybrid Premium),131.15,131.15,160.30
+Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High,Big Move
+2025-07-14 09:45:00,176.35,2025-07-14 09:50:00,176.35,0.00,0.00%,SL Hit,Call Option (Enhanced Hybrid Premium),165.77,176.35,184.90,False
+2025-07-14 10:57:00,181.95,2025-07-14 10:58:00,170.30,-11.65,-6.40%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),171.03,171.03,181.95,False
+2025-07-14 11:03:00,175.95,2025-07-14 11:06:00,169.65,-6.30,-3.58%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),165.39,165.39,176.00,False
+2025-07-14 11:49:00,149.40,2025-07-14 12:01:00,140.44,-8.96,-6.00%,SL Hit,Call Option (Enhanced Hybrid Premium),140.44,140.44,149.40,False
+2025-07-14 12:31:00,149.75,2025-07-14 12:54:00,143.15,-6.60,-4.41%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),140.76,140.76,155.60,False
+2025-07-14 13:18:00,140.85,2025-07-14 13:23:00,150.85,10.00,7.10%,Fixed TP (Average Signal),Call Option (Enhanced Hybrid Premium),132.40,132.40,154.55,False
+2025-07-14 14:08:00,142.55,2025-07-14 14:24:00,152.55,10.00,7.02%,Fixed TP (Average Signal),Call Option (Enhanced Hybrid Premium),134.00,142.55,155.10,False

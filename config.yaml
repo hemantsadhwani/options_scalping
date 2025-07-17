@@ -3,7 +3,7 @@
 
 # --- TIMING CONFIGURATION ---
 EOD_EXIT_TIME: '15:14'
-LAST_ENTRY_TIME: '15:00' # New setting: Don't take trades after 3 PM
+LAST_ENTRY_TIME: '15:10' # New setting: Don't take trades after 3 PM
 
 # Note: Trade execution parameters have been moved to option_tools/trade_config.yaml
 # for better organization and modularity

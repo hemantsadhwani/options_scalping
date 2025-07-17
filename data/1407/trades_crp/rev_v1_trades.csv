@@ -1,8 +1,8 @@
-Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High
-2025-07-14 09:30:00,164.05,2025-07-14 09:35:00,150.93,-13.12,-8.00%,SL Hit,Call Option (Hybrid Premium),150.93,150.93,166.8
-2025-07-14 10:43:00,177.0,2025-07-14 10:47:00,174.45,-2.55,-1.44%,Williams28 Exit,Call Option (Hybrid Premium),162.84,162.84,179.4
-2025-07-14 10:57:00,181.95,2025-07-14 10:58:00,170.3,-11.65,-6.40%,Williams28 Exit,Call Option (Hybrid Premium),167.39,167.39,181.95
-2025-07-14 11:03:00,175.95,2025-07-14 11:06:00,169.65,-6.3,-3.58%,Williams28 Exit,Call Option (Hybrid Premium),161.87,161.87,176.0
-2025-07-14 14:00:00,138.35,2025-07-14 14:02:00,134.5,-3.85,-2.78%,Williams28 Exit,Call Option (Hybrid Premium),127.28,127.28,138.55
-2025-07-14 10:24:00,93.10,2025-07-14 10:42:00,105.17,12.07,12.96%,Trailing SL,Put Option (Hybrid Premium),79.13,105.17,113.20
-2025-07-14 14:57:00,94.95,2025-07-14 14:58:00,80.71,-14.24,-15.00%,SL Hit,Put Option (Hybrid Premium),80.71,80.71,94.95
+Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High,Big Move
+2025-07-14 09:30:00,164.05,2025-07-14 09:33:00,154.21,-9.84,-6.00%,SL Hit,Call Option (Enhanced Hybrid Premium),154.21,154.21,166.8,False
+2025-07-14 10:43:00,177.0,2025-07-14 10:47:00,174.45,-2.55,-1.44%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),166.38,166.38,179.4,False
+2025-07-14 10:57:00,181.95,2025-07-14 10:58:00,170.3,-11.65,-6.40%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),171.03,171.03,181.95,False
+2025-07-14 11:03:00,175.95,2025-07-14 11:06:00,169.65,-6.3,-3.58%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),165.39,165.39,176.0,False
+2025-07-14 14:00:00,138.35,2025-07-14 14:02:00,134.5,-3.85,-2.78%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),130.05,130.05,138.55,False
+2025-07-14 10:24:00,93.10,2025-07-14 10:32:00,103.10,10.00,10.74%,Fixed TP (Average Signal),Put Option (Enhanced Hybrid Premium),87.51,93.10,103.80,False
+2025-07-14 14:57:00,94.95,2025-07-14 14:58:00,89.25,-5.70,-6.00%,SL Hit,Put Option (Enhanced Hybrid Premium),89.25,89.25,94.95,False

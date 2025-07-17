@@ -1,0 +1,20 @@
+--- Final Consolidated Analytics Summary ---
+Date: 0907
+CPR Width: 24.27
+Daily TC: 25510.37
+Daily BC: 25486.10
+Day High: 25548.70
+Day Low: 25424.35
+Index Direction: Mixed
+
+Format: Trades / Win% / ₹P&L / P/L%
+
+| Date   | CPR Width  | Index Call                     | Index Put                      | Reversal Call                  | Reversal Put                   | Total                          |
+|--------|------------|--------------------------------|--------------------------------|--------------------------------|--------------------------------|--------------------------------|
+| 0907   | 24.27      | 3 / 66.7% / ₹15.15 / 0.0%      | 5 / 20.0% / ₹-9.75 / 0.0%      | ❌ No Signal                    | ❌ No Signal                    | 8 / 37.5% / ₹5.40 / 0.0%       |
+
+Strategy Recommendations:
+- Reversal Call: ❌ REJECT (Low 25424.35 ≤ BC 25486.10)
+- Reversal Put: ❌ REJECT (High 25548.70 ≥ TC 25510.37)
+
+Total Performance: 8 / 37.5% / ₹5.40 / 0.0%

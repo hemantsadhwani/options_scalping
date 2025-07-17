@@ -1,10 +1,9 @@
 # app.py (Final Corrected Version)
 
-from tools.run_s1r1_crp_filter import filter_signals_in_cpr_band_improved
 from tools.run_cpr_filter import run_cpr_filter
 from tools.run_cpr_filter_wide_band import run_cpr_filter_wide_band
 from option_tools.option_trade_executor import execute_option_trades as execute_trades
-from tools.run_analytics import run_analysis
+from run_analytics import run_analysis
 from tools.clean_data_dir import clean_generated_files
 from strategies import (
     generate_continuation_strategies,
@@ -18,7 +17,6 @@ from option_strategies import (
 )
 from option_tools import execute_option_trades, run_option_analysis, run_option_backtest, run_combined_option_backtest
 from run_process_data import run_process_data
-from tools.run_backtesting import run_backtest
 import yaml
 import pandas as pd
 import os
@@ -31,16 +29,14 @@ run_cleanup = True          # Step 0: Clean generated files from previous runs
 run_step_1 = True          # Step 1: Process raw data and generate indicators
 run_step_2 = True          # Step 2: Generate continuation signals for index
 run_step_3 = True          # Step 3: Generate first reversal signals for index
-run_step_3_2 = True        # Step 3.2: Generate second reversal signals for index
-run_step_4 = True          # Step 4: Run backtest on index signals (raw) for Index
+run_step_4 = True        # Step 4: Generate second reversal signals for index
 run_step_5 = True          # Step 5: Apply CPR filter to index signals for Index
-run_step_6 = True          # Step 6: Run backtest on CPR-filtered index signals for Index
-run_step_7 = True          # Step 7: Execute trades on index signals (raw) for Index
-run_step_8 = True          # Step 8: Execute trades on CPR-filtered index signals for Index
-run_step_9 = True           # Step 9: Process call/put option data (signals & backtest) for Option
-run_step_10 = True          # Step 10: Process put option data (now combined with step 9) for Option
-run_step_11 = True          # Step 11: Execute option trades (call & put) for Option
-run_final_analytics = True  # Final Step: Generate comprehensive analytics reports
+run_step_6 = True          # Step 6: Execute trades on index signals (raw) for Index
+run_step_7 = True          # Step 7: Execute trades on CPR-filtered index signals for Index
+run_step_8 = True           # Step 8: Process call/put option data (signals & backtest) for Option
+run_step_9 = True          # Step 9: Process put option data (now combined with step 9) for Option
+run_step_10 = True          # Step 10: Execute option trades (call & put) for Option
+run_step_11 = True  # Step 11: Generate comprehensive analytics reports
 
 def load_config():
     """Load configuration from config.yaml"""
@@ -96,59 +92,11 @@ def main():
         generate_reversal_strategies()
         print("Step 3 finished.\n")
 
-    if run_step_3_2:
-        print("\n--- Running Step 3.2: Generate Second Reversal Signals ---")
-        generate_reversal_strategies_v2()
-        print("Step 3.2 finished.\n")
-
-
     if run_step_4:
-        print("\n--- Running Step 4: Run Backtest ---")
-        
-        for date in dates:
-            cont_signals_file = f"./data/{date}/tradeview_cont_output.csv"
-            rev_signals_file = f"./data/{date}/tradeview_rev_output.csv"
-            calls_file = f"./data/{date}/call/call_out.csv"
-            puts_file = f"./data/{date}/put/put_out.csv"
-            
-            required_files = [calls_file, puts_file, cont_signals_file, rev_signals_file]
-            if all(os.path.exists(f) for f in required_files):
-                print(f"\n--- Processing Date: {date} ---")
-                try:
-                    calls_df = pd.read_csv(calls_file, encoding='utf-8-sig')
-                    calls_df['datetime'] = pd.to_datetime(calls_df['datetime'])
-                    
-                    puts_df = pd.read_csv(puts_file, encoding='utf-8-sig')
-                    puts_df['datetime'] = pd.to_datetime(puts_df['datetime'])
-                    
-                    cont_signals_df = pd.read_csv(cont_signals_file, encoding='utf-8-sig')
-                    cont_signals_df['datetime'] = pd.to_datetime(cont_signals_df['datetime'])
-                    
-                    rev_signals_df = pd.read_csv(rev_signals_file, encoding='utf-8-sig')
-                    rev_signals_df['datetime'] = pd.to_datetime(rev_signals_df['datetime'])
+        print("\n--- Running Step 4: Generate Second Reversal Signals ---")
+        generate_reversal_strategies_v2()
+        print("Step 4 finished.\n")
 
-                    trades_cont = run_backtest(cont_signals_df, calls_df.copy(), puts_df.copy(), date, config, strategy_name='Continuation Strategy')
-                    trades_rev = run_backtest(rev_signals_df.copy(), calls_df.copy(), puts_df.copy(), date, config, strategy_name='Reversal Strategy')
-                    
-                    rev_signals_df_v2 = rev_signals_df.copy()
-                    trades_rev_v2 = run_backtest(rev_signals_df_v2, calls_df.copy(), puts_df.copy(), date, config, strategy_name='Reversal Strategy v2', call_col='Call_v2', put_col='Put_v2')
-                    
-                    backtest_dir = f"./data/{date}/backtest"
-                    os.makedirs(backtest_dir, exist_ok=True)
-
-                    if trades_cont:
-                        pd.DataFrame(trades_cont).to_csv(f"{backtest_dir}/backtest_results_cont.csv", index=False)
-                    if trades_rev:
-                        pd.DataFrame(trades_rev).to_csv(f"{backtest_dir}/backtest_results_rev.csv", index=False)
-                    if trades_rev_v2:
-                        pd.DataFrame(trades_rev_v2).to_csv(f"{backtest_dir}/backtest_results_rev_v2.csv", index=False)
-                
-                except Exception as e:
-                    print(f"  ✗ ERROR processing {date} in Step 4: {str(e)}")
-                    traceback.print_exc()
-            else:
-                print(f"  - Skipping {date} in Step 4, missing one or more required files.")
-        print("\nStep 4 finished.\n")
 
     if run_step_5:
         print("\n--- Running Step 5: Run CPR Filter ---")
@@ -189,14 +137,7 @@ def main():
         print("\nStep 5 finished.\n")
 
     if run_step_6:
-        print("\n--- Running Step 6: Run Backtest on CPR-Filtered Signals ---")
-        for date in dates:
-            # ... (similar logic as step 4 but with _crp columns and output to backtest_crp)
-            pass
-        print("\nStep 6 finished.\n")
-
-    if run_step_7:
-        print("\n--- Running Step 7: Execute Trades ---")
+        print("\n--- Running Step 6: Execute Trades ---")
         for date in dates:
             trades_dir = f"./data/{date}/trades"
             try:
@@ -225,10 +166,10 @@ def main():
             except Exception as e:
                 print(f"  ✗ ERROR processing {date} in Step 7: {str(e)}")
                 traceback.print_exc()
-        print("\nStep 7 finished.\n")
+        print("\nStep 6 finished.\n")
 
-    if run_step_8:
-        print("\n--- Running Step 8: Execute CPR-Filtered Trades ---")
+    if run_step_7:
+        print("\n--- Running Step 7: Execute CPR-Filtered Trades ---")
         for date in dates:
             trades_dir_cpr = f"./data/{date}/trades_crp"
             try:
@@ -249,18 +190,18 @@ def main():
 
                 execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_crp', 'Call', config, trades_dir_cpr, 'rev_v1_trades.csv')
                 execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_crp', 'Put', config, trades_dir_cpr, 'rev_v1_trades.csv')
-                execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_v2_crp', 'Call', config, trades_dir_cpr, 'rev_v2_trades.csv')
-                execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_v2_crp', 'Put', config, trades_dir_cpr, 'rev_v2_trades.csv')
+                execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_v2', 'Call', config, trades_dir_cpr, 'rev_v2_trades.csv')
+                execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_v2', 'Put', config, trades_dir_cpr, 'rev_v2_trades.csv')
                 execute_trades(cont_signals_df.copy(), calls_df.copy(), 'Call_crp', 'Call', config, trades_dir_cpr, 'cont_trades.csv')
                 execute_trades(cont_signals_df.copy(), puts_df.copy(), 'Put_crp', 'Put', config, trades_dir_cpr, 'cont_trades.csv')
 
             except Exception as e:
                 print(f"  ✗ ERROR processing {date} in Step 8: {str(e)}")
                 traceback.print_exc()
-        print("\nStep 8 finished.\n")
+        print("\nStep 7 finished.\n")
 
-    if run_step_9:
-        print("\n--- Running Step 9: Process Call Data (Signal Generation & Backtest) ---")
+    if run_step_8:
+        print("\n--- Running Step 8: Process Call Data (Signal Generation & Backtest) ---")
         generate_continuation_strategies_options(call_input_filename='call/call_out.csv', call_output_filename='call/call_cont_out.csv', put_input_filename='put/put_out.csv', put_output_filename='put/put_cont_out.csv')
         generate_reversal_strategies_options(call_input_filename='call/call_out.csv', call_output_filename='call/call_rev_out.csv', put_input_filename='put/put_out.csv', put_output_filename='put/put_rev_out.csv')
         generate_reversal_strategies_v2_options(call_input_filename='call/call_out.csv', call_output_filename='call/call_rev_out.csv', put_input_filename='put/put_out.csv', put_output_filename='put/put_rev_out.csv')
@@ -302,10 +243,10 @@ def main():
             except Exception as e:
                 print(f"  ✗ ERROR processing {date} in Step 9: {str(e)}")
                 traceback.print_exc()
-        print("Step 9 finished.\n")
+        print("Step 8 finished.\n")
 
-    if run_step_10:
-        print("\n--- Running Step 10: Process Put Data (Signal Generation & Backtest) ---")
+    if run_step_9:
+        print("\n--- Running Step 9: Process Put Data (Signal Generation & Backtest) ---")
         # Note: Put data processing is now handled together with call data in step 9
         # using the option_strategies which process both call and put files appropriately
         print("   Put data processing is handled together with call data in step 9 using option strategies")
@@ -347,10 +288,10 @@ def main():
             except Exception as e:
                 print(f"  ✗ ERROR processing {date} in Step 10: {str(e)}")
                 traceback.print_exc()
-        print("Step 10 finished.\n")
+        print("Step 9 finished.\n")
 
-    if run_step_11:
-        print("\n--- Running Step 11: Execute Trades for Call/Put Data ---")
+    if run_step_10:
+        print("\n--- Running Step 10: Execute Trades for Call/Put Data ---")
         for date in dates:
             # Execute for Call data - Create 3 separate files
             call_trades_dir = f"./data/{date}/call/trades"
@@ -401,84 +342,13 @@ def main():
             except Exception as e:
                 print(f"  ✗ ERROR processing Put trades for {date} in Step 11: {str(e)}")
                 traceback.print_exc()
-        print("\nStep 11 finished.\n")
+        print("\nStep 10 finished.\n")
 
 
-    if run_final_analytics:
-        print("\n--- Running Final Analytics Report ---")
-        
-        # Run analysis for each dataset and collect raw stats
-        stats_main = run_analysis()
-        
-        # Use the correct options analytics function for call and put data
-        stats_options = run_option_analysis()
-        
-        # For backward compatibility with the final report generation
-        stats_call = {}
-        stats_put = {}
-
-        # Combine all stats
-        combined_stats = {}
-        for stats_dict in [stats_main, stats_call, stats_put]:
-            for date, data in stats_dict.items():
-                if date not in combined_stats:
-                    combined_stats[date] = data
-                else:
-                    # Aggregate data for the same date
-                    for key in data:
-                        if key != 'cpr_width':
-                            combined_stats[date][key] += data[key]
-
-        # --- Generate the final consolidated report ---
-        all_dates_summary = []
-        total_trades = {'Continuation': 0, 'Reversal v1': 0, 'Reversal v2': 0}
-        total_wins = {'Continuation': 0, 'Reversal v1': 0, 'Reversal v2': 0}
-        total_pnl = {'Continuation': 0.0, 'Reversal v1': 0.0, 'Reversal v2': 0.0}
-
-        for date, data in sorted(combined_stats.items()):
-            summary_row = [
-                date,
-                data['cpr_width'],
-                f"{data['cont_trades']} / {data['cont_wins']/data['cont_trades']*100 if data['cont_trades'] > 0 else 0:.2f}% / {data['cont_pnl']:.2f}",
-                f"{data['rev1_trades']} / {data['rev1_wins']/data['rev1_trades']*100 if data['rev1_trades'] > 0 else 0:.2f}% / {data['rev1_pnl']:.2f}",
-                f"{data['rev2_trades']} / {data['rev2_wins']/data['rev2_trades']*100 if data['rev2_trades'] > 0 else 0:.2f}% / {data['rev2_pnl']:.2f}",
-            ]
-            all_dates_summary.append(summary_row)
-
-            total_trades['Continuation'] += data['cont_trades']
-            total_wins['Continuation'] += data['cont_wins']
-            total_pnl['Continuation'] += data['cont_pnl']
-            total_trades['Reversal v1'] += data['rev1_trades']
-            total_wins['Reversal v1'] += data['rev1_wins']
-            total_pnl['Reversal v1'] += data['rev1_pnl']
-            total_trades['Reversal v2'] += data['rev2_trades']
-            total_wins['Reversal v2'] += data['rev2_wins']
-            total_pnl['Reversal v2'] += data['rev2_pnl']
-
-        if all_dates_summary:
-            final_report_path = './final_analytics_report.txt'
-            
-            total_wr_cpr = {
-                strat: (total_wins[strat] / total_trades[strat] * 100) if total_trades[strat] > 0 else 0.0
-                for strat in total_trades
-            }
-            
-            total_summary_row = ["Total", ""] + [
-                f"{total_trades[strat]} / {total_wr_cpr[strat]:.2f}% / {total_pnl[strat]:.2f}"
-                for strat in ["Continuation", "Reversal v1", "Reversal v2"]
-            ]
-            
-            final_report_str = "--- Final Consolidated Analytics Summary ---\n\n"
-            final_report_str += tabulate(all_dates_summary + [total_summary_row], headers=["Date", "CPR Width", "Continuation", "Reversal v1", "Reversal v2"], tablefmt="grid")
-            
-            try:
-                with open(final_report_path, 'w') as f:
-                    f.write(final_report_str)
-                print(f"\n✅ Final consolidated analytics report saved to {final_report_path}")
-            except IOError as e:
-                print(f"\n  ✗ ERROR saving final consolidated report: {e}")
-
-        print("Final analytics finished.\n")
+    if run_step_11:
+        print("\n--- Running Step 11: Final Analytics Report ---")
+        run_analysis()
+        print("Step 11 finished.\n")
 
     print("All selected steps completed successfully!")
 

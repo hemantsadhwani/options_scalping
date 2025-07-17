@@ -1,2 +1,2 @@
-Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High
-2025-06-24 13:58:00,165.95,2025-06-24 13:59:00,152.67,-13.28,-8.00%,SL Hit,Put Option (Hybrid Premium),152.67,152.67,168.05
+Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High,Big Move
+2025-06-24 13:58:00,165.95,2025-06-24 13:59:00,155.99,-9.96,-6.00%,SL Hit,Put Option (Enhanced Hybrid Premium),155.99,155.99,168.05,False

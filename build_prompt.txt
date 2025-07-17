@@ -2,12 +2,138 @@ I am trying to improve ./option_tools/option_trade_executor.py so going step by 
 Also, ive current implemented the trade_rules.txt ./optio_tools/option_trade_executor.py & ./option_tools/trade_config.yaml
 
 I am currently focusing on improving the ./data/1407/. instead changing the app.py better to write shall test file which 
-reads call/put signals from ./data/0307/tradeview_rev_output.csv "Call_crp" & "Put_crp" and take respective trades+next candle on ./data/0307/call/call_out.csv
-and ./data/0307/put/put_out.csv. This should generate ./data/0307/trades_crp/rev_v1_trades.csv. 
+reads call/put signals from ./data/1407/tradeview_rev_output.csv "Call_crp" & "Put_crp" and take respective trades+next candle on ./data/1407/call/call_out.csv
+and ./data/1407/put/put_out.csv. This should generate ./data/1407/trades_crp/rev_v1_trades.csv. 
 
 Core objective is to create a test file which can use attached files to improve or build profitable strategy using trade_rules.txt inplemented in option_trade_executor.py
 
-Current rev_v1_trades.csv is hugely loss making 
+Current  ./data/1407/trades_crp/rev_v1_trades.csv is hugely loss making - how we can improve?
 
+
+
+There is no point in running CRP filter on signals generated from running ./strategies/run_rev2_strategy.py. As they are already delayed.
+Can you make a small change while running ./option_tools/option_trade_executor.py - instead using "Put_v2_crp" from tradeview_rev_output.csv use
+"Put_v2". This small change simply bypase the crp filter on rev_v2 strategy
+
+Can you help me debug? ./data/1107/ condition become true on ./strategies/run_rev2_strategy.py become true 9:46 however Put_v2 = 1 in ./data/1107/tradeview_rev_output.csv
+
+This bring is to million dollor issue. How we can diffrentiate between average signals where we can fixed take profit of 12 points and still be winner.
+And another point comes when we should trail the trend. for example
+ Entry Time	Entry Price	Exit Time	Exit Price	P/L	P/L %	Exit Reason	Trade Type	Initial SL	Final SL	Highest High
+11/07/25 9:52	75	11/07/25 10:08	83.37	8.37	11.16%	Trailing SL	Put Option (Hybrid Premium)	63.75	83.37	90.3
+
+for example while this signal exited at 
+11/07/2025  9:52:00 AM but if we have identified the trade for big move based on some (to be researched) 
+parameter or technical indicators this trade fetched. We lost nearly 80+ %
+11/07/25 11:09	137.8	146.75	137.5	144	46.18324375	39.60028699	-15.10989011	-5.759162304
+Then we could have trail this signal until the ema 15 & emap 9 bullish cross over would have happened. 
+
+Since we have to research - create a new debbug file
+reading ./data/1107/put/trades/put_rev_v2_trades.csv for time stamps of all signals, ohlc data with StochRSI(K,D), William(9) as %R and William(9) as %R.1 ./data/1107/put/put_out.csv 
+
+Lets read in debbug file ./data/1107/option_tools/execute option_trade_executor.py, trade_config.yaml & trade_rules.txt (to be improvised)
+
+I am trying to improve date by date using file debug_trade_analysis.py and comparing improved output with existing put_rev_v2_trades.csv 
+
+You can remove the paths as i have shared all files for testing
+
+
+Indeed you have improved ./data/1507/call/trades/call_rev_v2_trades.csv. If i generalise same on ./data/1407/put/trades/put_rev_v2_trades.csv
+Trade on 10:31 was big move which is FALSE
+14/07/25 10:31	101.5	14/07/25 10:43	102.9	1.4	1.38%	Williams Exit	Put Option (Advanced Hybrid Premium)	95.41	101.5	113.2	FALSE
+
+And all 3 below BigMove = True hit SL @ 14/07/25 12:48, 14/07/25 14:37, 14/07/25 15:11
+
+Can you compare put on 11 and 14 as what parameter needs tune ?
+
+While making changes 
+./data/1507/call/trades/call_rev_v2_trades.csv
+./data/1107/put/trades/put_rev_v2_trades.csv
+looks steady and should not detoriate especially No of BigMoves = True
+
+However, i still dont agree with 
+./data/1407/put/trades/put_rev_v2_trades.csv
+14/07/25 10:31	101.5	14/07/25 10:56	101.5	0	0.00%	SL Hit	Put Option (Advanced Hybrid Premium)	95.41	101.5	113.2	TRUE
+
+Now 10:31 is True with 0%?? However if you check the trailing price went upto 11:43
+14/07/25 11:43	133.7	135.75	132.2	135.4	61.69653818	36.36188397	-2.868852459	-1.361867704
+
+Also, other BigMove = True have SL??
+
+My understanding was we are building a logic to reach QuickTP and there we decide to come out or trail. So worst we should have got QuickTP
+
+I dont see a fix, I still see it exits just at approx 13% where as trade could have trailed until 11:09
+11/07/25 11:09	137.8	146.75	137.5	144	46.18324375	39.60028699	-15.10989011	-5.759162304
+
+What we are trying to build is a system of a trade management, which identify Average Signals with BigMove. For avarage Signals
+it tries to minimize losses and book Fixed Price 10 points. And for BigMove trail the move (ATR or EMA)
+
+We know for 3 dates (Call & put) where the BigMoves are there. And trying to build system for us to identify some how average signals from big moves. 
+And once BigMove is identifies trail as much as possible or worst case take QuickTP.
+
+You must carefully read the existing trading logic and if trade_config
+./option_tools/option_trade_executor.py & ./option_tools/trade_config.yaml
+
+I'll list all important BigMoves trades from 1107,1407 & 1507 with capturing the bigmoves with trailing logic
+
+./data/1507/call/trades/call_rev_v2_trades.csv
+./data/1507/call/call_out.csv
+15/07/25 14:12	140	15/07/25 14:37	131.6	-8.4	-6.00%	SL Hit	Call Option (Advanced Hybrid Premium)	131.6	131.6	147.2	TRUE
+15/07/25 14:42	138.5	15/07/25 14:46	130.19	-8.31	-6.00%	SL Hit	Call Option (Advanced Hybrid Premium)	130.19	130.19	139.3	FALSE
+15/07/25 15:03	135.65	15/07/25 15:29	167.8	32.15	23.70%	End of Data	Call Option (Advanced Hybrid Premium)	127.51	153.42	170.85	TRUE
+
+./data/1107/put/trades/put_rev_v2_trades.csv
+./data/1107/put/put_out.csv
+I am pretty much focused on improving 
+Entry Time	Entry Price	Exit Time	Exit Price	P/L	P/L %	Exit Reason	Trade Type	Initial SL	Final SL	Highest High	Big Move
+11/07/25 9:52	75	11/07/25 10:04	85	10	13.33%	Trailing SL	Put Option (Advanced Hybrid Premium)	70.5	85	90.1	TRUE
+While this is exiting with mere 13% but by carefully looking at trading logs in ./data/1107/put/put_out.csv trade could have easily trailled until Approx 11:09 ~146
+datetime	open	high	low	close	K	D	%R	%R.1
+11/07/25 11:09	137.8	146.75	137.5	144	46.18324375	39.60028699	-15.10989011	-5.759162304
+
+./data/1407/put/trades/put_rev_v2_trades.csv
+./data/1407/put/put_out.csv
+Please read ./data/1407/put/trades/put_rev_v2_trades.csv. i am broadly OK with current BigMoves
+
+I strongly recommend to develop strategy keeping in mind 
+./data/1107/put/trades/put_rev_v2_trades.csv
+./data/1407/put/trades/put_rev_v2_trades.csv
+./data/1507/call/trades/call_rev_v2_trades.csv
+
+Shall we improve ./data/1107/put/trades/put_rev_v2_trades.csv 9:52 ?
+
+
+
+I am super impressed with ENHANCED_TRADING_SYSTEM_SUMMARY.md. Can we work to getehr to build a enhanced trading system for SL also. Which keeps eating our profit. 
+We can analyse all the "SL Hit " in 1107, 1407 & 1507 and see if we can build a technical (StochRSI(K,D), William(9) as %R, William(28) as %R.1 Ema 9 or 15) 
+or advance mechanism which traders use?
+
+I would encourage to see what happens between entry and exit time for below trades from which we can build insigts using external experence to minimise max extent without hurting our winners 
+
+
+Entry Time	Entry Price	Exit Time	Exit Price	P/L	P/L %	Exit Reason	Trade Type	Initial SL	Final SL	Highest High	Big Move
+
+./data/1407/put/trades/put_rev_v2_trades.csv
+14/07/25 10:11	102.75	14/07/25 10:12	96.58	-6.17	-6.00%	SL Hit	Put Option (Enhanced Hybrid Premium)	96.58	96.58	104.4	FALSE
+14/07/25 12:25	125.05	14/07/25 12:33	117.55	-7.5	-6.00%	SL Hit	Put Option (Enhanced Hybrid Premium)	117.55	117.55	128.55	TRUE
+14/07/25 12:38	122.95	14/07/25 12:40	115.57	-7.38	-6.00%	SL Hit	Put Option (Enhanced Hybrid Premium)	115.57	115.57	123.75	FALSE
+14/07/25 12:48	121.75	14/07/25 13:00	121.75	0	0.00%	SL Hit	Put Option (Enhanced Hybrid Premium)	114.44	121.75	131.4	FALSE
+14/07/25 14:37	117.45	14/07/25 14:38	110.4	-7.05	-6.00%	SL Hit	Put Option (Enhanced Hybrid Premium)	110.4	110.4	118.25	FALSE
+14/07/25 15:11	97.35	14/07/25 15:12	91.51	-5.84	-6.00%	SL Hit	Put Option (Enhanced Hybrid Premium)	91.51	91.51	98.25	FALSE
+
+./data/1507/call/trades/call_rev_v2_trades.csv
+15/07/25 12:13	171.1	15/07/25 12:18	159.15	-11.95	-6.98%	Williams Exit (Average Signal)	Call Option (Enhanced Hybrid Premium)	160.83	160.83	171.5	FALSE
+15/07/25 13:03	169.75	15/07/25 13:11	159.56	-10.19	-6.00%	SL Hit	Call Option (Enhanced Hybrid Premium)	159.56	159.56	173.5	TRUE
+15/07/25 13:49	148.25	15/07/25 14:02	139.35	-8.9	-6.00%	SL Hit	Call Option (Enhanced Hybrid Premium)	139.35	139.35	149.4	TRUE
+15/07/25 14:12	140	15/07/25 14:36	140	0	0.00%	SL Hit	Call Option (Enhanced Hybrid Premium)	131.6	140	147.2	FALSE
+15/07/25 14:42	138.5	15/07/25 14:46	130.35	-8.15	-5.88%	Williams Exit (Average Signal)	Call Option (Enhanced Hybrid Premium)	130.19	130.19	139.3	FALSE
+
+./data/1407/put/trades/put_rev_v2_trades.csv
+./data/1107/put/trades/put_rev_v2_trades.csv
+./data/1507/call/trades/call_rev_v2_trades.csv
+11/07/25 12:53	126.6	11/07/25 14:12	119	-7.6	-6.00%	SL Hit	Put Option (Enhanced Hybrid Premium)	119	119	140.95	TRUE
+11/07/25 14:21	131.3	11/07/25 14:39	123.42	-7.88	-6.00%	SL Hit	Put Option (Enhanced Hybrid Premium)	123.42	123.42	134.9	FALSE
+
+i would encorage to build another file ENHANCED_TRADING_SYSTEM_SUMMARY_FOR_SL.md
 
 

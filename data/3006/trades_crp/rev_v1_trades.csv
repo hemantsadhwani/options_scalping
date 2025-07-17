@@ -1,8 +1,8 @@
-Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High
-2025-06-30 10:04:00,194.7,2025-06-30 10:07:00,206.7,12.0,6.16%,Quick TP,Call Option (Hybrid Premium),179.12,179.12,209.8
-2025-06-30 10:35:00,193.95,2025-06-30 10:39:00,190.4,-3.55,-1.83%,Williams28 Exit,Call Option (Hybrid Premium),178.43,178.43,199.95
-2025-06-30 10:53:00,182.3,2025-06-30 11:18:00,174.1,-8.2,-4.50%,Williams28 Exit,Call Option (Hybrid Premium),167.72,167.72,191.45
-2025-06-30 11:22:00,176.7,2025-06-30 11:52:00,188.7,12.0,6.79%,Quick TP,Call Option (Hybrid Premium),162.56,162.56,190.85
-2025-06-30 12:49:00,171.1,2025-06-30 12:54:00,164.2,-6.9,-4.03%,Williams28 Exit,Call Option (Hybrid Premium),157.41,157.41,171.6
-2025-06-30 10:22:00,130.30,2025-06-30 10:51:00,142.30,12.00,9.21%,Quick TP,Put Option (Hybrid Premium),119.88,119.88,142.45
-2025-06-30 12:26:00,126.65,2025-06-30 12:47:00,144.98,18.33,14.47%,Trailing SL,Put Option (Hybrid Premium),116.52,144.98,153.00
+Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High,Big Move
+2025-06-30 10:04:00,194.7,2025-06-30 10:05:00,204.7,10.0,5.14%,Fixed TP (Average Signal),Call Option (Enhanced Hybrid Premium),183.02,183.02,209.8,False
+2025-06-30 10:35:00,193.95,2025-06-30 10:39:00,190.4,-3.55,-1.83%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),182.31,182.31,199.95,False
+2025-06-30 10:53:00,182.3,2025-06-30 11:04:00,182.3,0.0,0.00%,SL Hit,Call Option (Enhanced Hybrid Premium),171.36,182.3,190.1,False
+2025-06-30 11:22:00,176.7,2025-06-30 11:36:00,186.7,10.0,5.66%,Fixed TP (Average Signal),Call Option (Enhanced Hybrid Premium),166.1,176.7,187.8,False
+2025-06-30 12:49:00,171.1,2025-06-30 12:54:00,164.2,-6.9,-4.03%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),160.83,160.83,171.6,False
+2025-06-30 10:22:00,130.30,2025-06-30 11:23:00,138.29,7.99,6.13%,Trailing SL,Put Option (Enhanced Hybrid Premium),122.48,138.29,146.50,True
+2025-06-30 12:26:00,126.65,2025-06-30 12:31:00,136.65,10.00,7.90%,Fixed TP (Average Signal),Put Option (Enhanced Hybrid Premium),119.05,126.65,136.90,False

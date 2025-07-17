@@ -1,31 +1,162 @@
+# trade_config.yaml
+# Enhanced Configuration for Hybrid Premium Trading Strategy with Improved BigMove Detection
+
 STRATEGY_TYPE: 'HYBRID_PREMIUM'
-HYBRID_PREMIUM:
-  SL_PERCENT: 6.0
-  PREMIUM_TIERS:
-    LOW:
-      threshold: 100
-      sl_percent: 15.0
-      atr_mult: 2.0
-      breakeven_delay: 0
-      trail_start_pct: 10.0
-    MED:
-      threshold: 250
-      sl_percent: 8.0
-      atr_mult: 2.5
-      breakeven_delay: 2
-      trail_start_pct: 15.0
-    HIGH:
-      threshold: .inf  # Use .inf for infinity in YAML
-      sl_percent: 7.0
-      atr_mult: 4.0
-      breakeven_delay: 2
-      trail_start_pct: 15.0
-  BREAKEVEN_MOVE_PCT: 20.0
-  STALL_CANDLES: 10
-  STALL_THRESHOLD_PCT: 1.5
-  QUICK_TP_POINTS: 12
-  ATR_PERIOD: 5
-  WILLIAMS28_CROSS_UNDER: -80
-  WILLIAMS9_CROSS_UNDER: -80
-  STOCH_OVERSOLD: 20
-  USE_STOCH_FADE_FOR_TP: true
+
+# Premium Tiers - Enhanced for better BigMove handling
+PREMIUM_TIERS:
+  LOW:
+    threshold: 100
+    sl_percent: 6.0
+    atr_mult: 2.5
+    breakeven_delay: 0
+    trail_start_pct: 8.0  # Reduced for quicker trailing activation
+  MED:
+    threshold: 250
+    sl_percent: 6.0
+    atr_mult: 3.0
+    breakeven_delay: 2
+    trail_start_pct: 12.0  # Reduced for quicker trailing activation
+  HIGH:
+    threshold: inf
+    sl_percent: 7.0
+    atr_mult: 4.0
+    breakeven_delay: 2
+    trail_start_pct: 15.0
+
+# General Settings - Optimized for Average vs BigMove differentiation
+SL_PERCENT: 6.0
+BREAKEVEN_MOVE_PCT: 6.0
+STALL_CANDLES: 10
+STALL_THRESHOLD_PCT: 1.5
+WILLIAMS28_CROSS_UNDER: -80
+WILLIAMS9_CROSS_UNDER: -80
+QUICK_TP_POINTS: 10  # Fixed TP for Average signals
+USE_STOCH_FADE_FOR_TP: true
+ATR_PERIOD: 5
+STOCH_OVERSOLD: 20
+
+# Enhanced Signal Differentiation with Multi-Stage Trailing
+SIGNAL_DIFFERENTIATION:
+  ENABLED: true
+  AVG_WINDOW_CANDLES: 3
+  
+  # Enhanced BigMove Detection
+  BIGMOVE_DETECTION:
+    # Primary thresholds - FIXED to catch the 1107 9:51 BigMove
+    THRESHOLDS:
+      CALL:
+        STOCH_K_THRESHOLD: 72
+        WILLIAMS_R1_THRESHOLD: -30  # Relaxed from -5 to catch 1507 10:29 trade
+      PUT:
+        STOCH_K_THRESHOLD: 75  # Reduced from 78 to be more sensitive
+        WILLIAMS_R1_THRESHOLD: -50  # Further relaxed to -50 to catch 1107 (-44.43) and 1407 (-34.33)
+    
+    # Additional momentum confirmation
+    MOMENTUM_CONFIRMATION:
+      ENABLED: false  # DISABLED - was preventing detection of profitable BigMoves
+      MIN_CANDLE_RANGE_PCT: 1.2  # Reduced from 2.0% to catch more BigMoves
+      VOLUME_SPIKE_THRESHOLD: 1.5  # Volume spike multiplier (if available)
+      CONSECUTIVE_MOVES: 1  # Reduced to 1 for more sensitive detection
+  
+  # Multi-Stage Trailing for BigMoves
+  BIGMOVE_TRAILING:
+    # Stage 1: Aggressive trailing (0-25% profit)
+    STAGE1:
+      PROFIT_THRESHOLD: 25.0
+      ATR_MULTIPLIER: 3.0  # Reduced from 5.0 for tighter trailing
+      MIN_SL_PCT: 8.0  # Reduced from 20.0
+      
+    # Stage 2: Moderate trailing (25-50% profit)  
+    STAGE2:
+      PROFIT_THRESHOLD: 50.0
+      ATR_MULTIPLIER: 4.0
+      MIN_SL_PCT: 15.0
+      
+    # Stage 3: Conservative trailing (50%+ profit)
+    STAGE3:
+      PROFIT_THRESHOLD: 999.0  # No upper limit
+      ATR_MULTIPLIER: 6.0  # More conservative for large profits
+      MIN_SL_PCT: 25.0
+  
+  # Enhanced EMA Crossover Exit
+  EMA_CROSS_EXIT:
+    ENABLED: true
+    EMA_PERIODS: [9, 15]
+    MIN_PROFIT_PCT: 20.0  # Increased from 15.0
+    MIN_CANDLES_BEFORE_EXIT: 8  # Reduced from 10 for quicker response
+    
+    # Additional filters for EMA exit
+    CONFIRMATION_FILTERS:
+      VOLUME_DECLINE: true  # Require volume decline confirmation
+      MOMENTUM_WEAKENING: true  # Require momentum indicators to weaken
+      CONSECUTIVE_BEARISH_CANDLES: 2  # Require 2 consecutive bearish candles
+
+# Average Signal Management - Fixed TP approach
+AVERAGE_SIGNAL_MANAGEMENT:
+  ENABLED: true
+  FIXED_TP_POINTS: 10  # Fixed 10-point profit target
+  MAX_LOSS_PCT: 6.0  # Maximum loss percentage
+  QUICK_EXIT_CONDITIONS:
+    STALL_CANDLES: 5  # Reduced from 10 for quicker exit
+    WILLIAMS_EXIT_ENABLED: true  # Enable Williams R exits for average signals
+    BREAKEVEN_AFTER_PCT: 4.0  # Move to breakeven after 4% profit
+
+# Risk Management Enhancements
+RISK_MANAGEMENT:
+  # Time-based adjustments
+  TIME_BASED_TRAILING:
+    ENABLED: true
+    TIGHTEN_AFTER_MINUTES: 30  # Tighten trailing after 30 minutes
+    TIGHTEN_MULTIPLIER: 0.8  # Reduce ATR multiplier by 20%
+  
+  # Profit protection
+  PROFIT_PROTECTION:
+    ENABLED: true
+    PROTECT_AFTER_PCT: 30.0  # Protect profits after 30%
+    PROTECTION_LEVEL_PCT: 20.0  # Protect at least 20% profit
+
+# Enhanced Stop Loss Management System
+ENHANCED_SL_MANAGEMENT:
+  ENABLED: false  # DISABLED until properly tested - was causing early exits on profitable BigMove trades
+  
+  # Dynamic SL based on entry conditions
+  DYNAMIC_SL:
+    HIGH_RISK:
+      STOCH_K_THRESHOLD: 85
+      WILLIAMS_R_THRESHOLD: -20
+      SL_PERCENT: 3.5
+      QUICK_EXIT_MINUTES: 3
+    
+    MODERATE_RISK:
+      STOCH_K_THRESHOLD: 70
+      WILLIAMS_R_THRESHOLD: -50
+      SL_PERCENT: 5.0
+      ASSESSMENT_MINUTES: 10
+    
+    LOW_RISK:
+      SL_PERCENT: 7.0
+      TRAILING_START_PCT: 3.0
+  
+  # Early warning system (Yellow Flag)
+  YELLOW_FLAG_SYSTEM:
+    ENABLED: true
+    WILLIAMS_R_CROSS: -80  # Warning when Williams %R crosses above this
+    STOCH_MOMENTUM_DROP: 20  # Warning when Stoch K drops this much
+    TIGHTEN_SL_PCT: 1.5  # Tighten SL by this percentage
+    CONFIRMATION_CANDLES: 2  # Require confirmation over this many candles
+    
+  # Technical exit conditions
+  TECHNICAL_EXITS:
+    ENABLED: true
+    WILLIAMS_R_REVERSAL: -20  # Immediate exit threshold
+    STOCH_EXHAUSTION: 90  # Momentum exhaustion level
+    DOUBLE_REVERSAL: -50  # Both Williams indicators above this
+    STOCH_BEARISH_CROSS: true  # Exit on K crosses below D
+    
+  # Time-based SL adjustments
+  TIME_BASED_SL:
+    ENABLED: true
+    OPENING_HOUR_REDUCTION: 1.0  # Reduce SL by 1% during opening hour
+    CLOSING_HOUR_INCREASE: 1.0  # Increase SL by 1% during closing hour
+    VOLATILITY_ADJUSTMENT: true  # Adjust based on market volatility

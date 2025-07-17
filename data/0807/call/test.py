@@ -1,0 +1,58 @@
+rules_content = """
+### Trade Management System Rules (Version 3.0 - "Slabbed ATR")
+
+This document outlines the finalized, rule-based trade management system. The core principle is to combine a fixed initial risk with an intelligent, adaptive exit strategy that minimizes losses on failing trades and maximizes profits on winning trades.
+
+---
+
+#### 1. Trade Entry
+
+*   **Signal Source:** A trade is initiated based on a valid signal from the `ml_call_data_out.csv` file.
+*   **Entry Condition:** A trade is only considered valid if the `filter_passed` column for that signal is `True`.
+*   **Entry Price:** The entry price is the `close` price of the candle corresponding to the signal's `entry_time`.
+
+---
+
+#### 2. Trade Management & Exit Logic
+
+Once a trade is entered, it is managed by a strict hierarchy of four exit rules.
+
+##### A. Initial Stop-Loss (The Catastrophe Stop)
+
+*   **Rule:** An initial stop-loss is immediately placed at **6% below the entry price**.
+*   **Purpose:** This is a non-negotiable, maximum-risk stop. Its sole function is to protect capital from an immediate and catastrophic move against the position.
+
+##### B. Stall Exit (The Momentum Failure Rule)
+
+*   **Rule:** If **14 consecutive price bars** pass without the trade making a new high since entry, the position is exited manually at the close of the 14th bar.
+*   **Purpose:** To cut trades that are not progressing. If the expected momentum does not materialize within a reasonable timeframe, the trade is considered a failure, and capital is freed up for better opportunities.
+
+##### C. Break-Even Trigger (The Risk Removal Rule)
+
+*   **Rule:** If the trade moves in our favor by a distance of **1.5 times the 5-period ATR** (Average True Range) from the entry price, the stop-loss is moved to the entry price.
+*   **Purpose:** To create a "risk-free" trade. Once a trade has shown significant initial strength, we remove the risk of it turning into a loss.
+
+##### D. Adaptive Trailing Stop (The Profit Maximizer Rule)
+
+*   **This rule activates ONLY after the Break-Even Trigger has been hit.** It replaces the break-even stop with a dynamic, volatility-based trail that adapts to the trade's profitability.
+*   **Logic:** The ATR multiplier used for the trail widens as the trade becomes more profitable, giving strong trends more room to breathe.
+
+*   **Phase 1: Protective Phase (Profit < 10%)**
+    *   **ATR Multiplier:** 1.8x
+    *   **Purpose:** To trail the stop tightly while the profit is small, locking in gains quickly.
+
+*   **Phase 2: Growth Phase (10% <= Profit < 20%)**
+    *   **ATR Multiplier:** 2.2x
+    *   **Purpose:** To begin giving the trade more room for normal pullbacks as it develops.
+
+*   **Phase 3: Trend Riding Phase (Profit >= 20%)**
+    *   **ATR Multiplier:** 2.5x
+    *   **Purpose:** To use the widest stop to ride a mature, explosive trend and capture the largest possible portion of the move.
+"""
+
+try:
+    with open("rules.txt", "w") as f:
+        f.write(rules_content)
+    print("Successfully updated and saved 'rules.txt' with the new intelligent trade management logic.")
+except Exception as e:
+    print(f"An error occurred while writing to the file: {e}")
