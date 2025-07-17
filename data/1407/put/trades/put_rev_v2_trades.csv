@@ -6,4 +6,4 @@ Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Ini
 2025-07-14 12:48:00,121.75,2025-07-14 13:00:00,121.75,0.00,0.00%,SL Hit,Put Option (Enhanced Hybrid Premium),114.44,121.75,131.40,False
 2025-07-14 13:50:00,120.90,2025-07-14 13:58:00,130.90,10.00,8.27%,Fixed TP (Average Signal),Put Option (Enhanced Hybrid Premium),113.65,120.90,133.45,False
 2025-07-14 14:37:00,117.45,2025-07-14 14:38:00,110.40,-7.05,-6.00%,SL Hit,Put Option (Enhanced Hybrid Premium),110.40,110.40,118.25,False
-2025-07-14 15:11:00,97.35,2025-07-14 15:12:00,91.51,-5.84,-6.00%,SL Hit,Put Option (Enhanced Hybrid Premium),91.51,91.51,98.25,False
+2025-07-14 15:11:00,97.35,2025-07-14 15:29:00,84.80,-12.55,-12.89%,Williams Exit (Average Signal),Put Option (Enhanced Hybrid Premium),82.75,82.75,98.25,False

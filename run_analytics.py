@@ -214,15 +214,18 @@ def get_index_trades_by_type(date_folder):
     return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}, {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}
 
 def format_trade_data(data, should_trade):
-    """Format trade data for display"""
+    """Format trade data for display with compact formatting"""
     if not should_trade:
         return "❌ No Signal"
     if data['count'] == 0:
-        return "0 / 0% / ₹0.00 / 0.0%"
+        return "0/0%/0/0%"
     
-    # Safety check for avg_pnl_pct
+    # Safety check for avg_pnl_pct and round values
     avg_pnl_pct = data.get('avg_pnl_pct', 0.0)
-    return f"{data['count']} / {data['win_rate']:.1f}% / ₹{data['total_pnl']:.2f} / {avg_pnl_pct:.1f}%"
+    rounded_pnl = round(data['total_pnl'])
+    rounded_pnl_pct = round(avg_pnl_pct)
+    
+    return f"{data['count']}/{data['win_rate']:.1f}%/{rounded_pnl}/{rounded_pnl_pct}%"
 
 def calculate_row_total(strategy_data_list):
     """Calculate total for a single row (aggregate of all strategies for one date)"""
@@ -268,6 +271,14 @@ def build_analytics_report_for_date(date_folder):
     reversal_call_data = get_trade_data(f"{base_path}/call/trades/call_rev_v2_trades.csv")
     reversal_put_data = get_trade_data(f"{base_path}/put/trades/put_rev_v2_trades.csv")
     
+    # Format trade data
+    index_call_formatted = format_trade_data(index_call_data, trade_logic['index_direction'] in ['Call', 'Mixed'])
+    index_put_formatted = format_trade_data(index_put_data, trade_logic['index_direction'] in ['Put', 'Mixed'])
+    
+    # Skip rows where both Index Call and Index Put have no data (0/0%/0/0%)
+    if (index_call_formatted == "0/0%/0/0%" and index_put_formatted == "0/0%/0/0%"):
+        return None
+    
     # Calculate row total (aggregate of all active strategies)
     row_total_data = calculate_row_total([
         (index_call_data, trade_logic['index_direction'] in ['Call', 'Mixed']),
@@ -280,136 +291,14 @@ def build_analytics_report_for_date(date_folder):
     summary_row = {
         'Date': date_folder,
         'CPR_Width': f"{cpr_data['cpr_width']:.2f}",
-        'Index_Call': format_trade_data(index_call_data, trade_logic['index_direction'] in ['Call', 'Mixed']),
-        'Index_Put': format_trade_data(index_put_data, trade_logic['index_direction'] in ['Put', 'Mixed']),
+        'Index_Call': index_call_formatted,
+        'Index_Put': index_put_formatted,
         'Reversal_Call': format_trade_data(reversal_call_data, trade_logic['reversal_call']),
         'Reversal_Put': format_trade_data(reversal_put_data, trade_logic['reversal_put']),
         'Total': format_trade_data(row_total_data, True)
     }
     
     return summary_row
-
-def run_analysis():
-    """Build consolidated report grouped by weeks"""
-    print(f"\n{'='*120}")
-    print(f"BUILDING WEEKLY CPR-BASED ANALYTICS REPORT")
-    print(f"{'='*120}")
-    
-    # Get all date directories
-    data_dirs = glob.glob("data/*/")
-    date_folders = [d.split('/')[1] for d in data_dirs if len(d.split('/')[1]) == 4]  # ddmm format
-    date_folders.sort()
-    
-    print(f"Found {len(date_folders)} date directories: {date_folders}")
-    
-    # Group dates into weeks
-    weekly_groups = get_weekly_groups(date_folders)
-    
-    all_summaries = []
-    
-    # Process each week
-    for week_num, week_dates in enumerate(weekly_groups, 1):
-        print(f"\n{'='*80}")
-        print(f"WEEK {week_num}: {week_dates[0]} to {week_dates[-1]}")
-        print(f"{'='*80}")
-        
-        week_summaries = []
-        
-        # Process each date in the week
-        for date_folder in week_dates:
-            summary = build_analytics_report_for_date(date_folder)
-            if summary:
-                # Only include rows that have some activity (exclude zero totals)
-                if summary['Total'] != "0 / 0% / ₹0.00 / 0.0%":
-                    week_summaries.append(summary)
-                    all_summaries.append(summary)
-                    print(f"✅ {date_folder}: {summary['Total']}")
-                else:
-                    print(f"⚪ {date_folder}: No activity (excluded)")
-        
-        if week_summaries:
-            print(f"\n📊 WEEK {week_num} SUMMARY:")
-            print(f"| {'Date':<6} | {'CPR Width':<10} | {'Index Call':<30} | {'Index Put':<30} | {'Reversal Call':<30} | {'Reversal Put':<30} | {'Total':<30} |")
-            print(f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|")
-            
-            for summary in week_summaries:
-                print(f"| {summary['Date']:<6} | {summary['CPR_Width']:<10} | {summary['Index_Call']:<30} | {summary['Index_Put']:<30} | {summary['Reversal_Call']:<30} | {summary['Reversal_Put']:<30} | {summary['Total']:<30} |")
-            
-            # Calculate and display week totals
-            week_totals = calculate_totals(week_summaries)
-            print(f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|")
-            print(f"| {'TOTAL':<6} | {'':<10} | {week_totals['Index_Call']:<30} | {week_totals['Index_Put']:<30} | {week_totals['Reversal_Call']:<30} | {week_totals['Reversal_Put']:<30} | {week_totals['Total']:<30} |")
-    
-    # Create final consolidated table (excluding zero rows)
-    if all_summaries:
-        print(f"\n{'='*120}")
-        print(f"FINAL CONSOLIDATED ANALYTICS SUMMARY - ALL ACTIVE DATES")
-        print(f"{'='*120}")
-        print("Note: Dates with zero activity have been excluded")
-        
-        # Print table header
-        print(f"| {'Date':<6} | {'CPR Width':<10} | {'Index Call':<30} | {'Index Put':<30} | {'Reversal Call':<30} | {'Reversal Put':<30} | {'Total':<30} |")
-        print(f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|")
-        
-        # Print each row
-        for summary in all_summaries:
-            print(f"| {summary['Date']:<6} | {summary['CPR_Width']:<10} | {summary['Index_Call']:<30} | {summary['Index_Put']:<30} | {summary['Reversal_Call']:<30} | {summary['Reversal_Put']:<30} | {summary['Total']:<30} |")
-        
-        # Calculate totals
-        totals = calculate_totals(all_summaries)
-        
-        # Print totals row
-        print(f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|")
-        print(f"| {'TOTAL':<6} | {'':<10} | {totals['Index_Call']:<30} | {totals['Index_Put']:<30} | {totals['Reversal_Call']:<30} | {totals['Reversal_Put']:<30} | {totals['Total']:<30} |")
-        
-        # Build comprehensive weekly report content
-        weekly_content = "--- Weekly CPR-Based Analytics Report ---\n\n"
-        weekly_content += "Format: Trades / Win% / ₹P&L / P/L%\n"
-        weekly_content += "Note: Dates with zero activity have been excluded\n\n"
-        
-        # Add each week's data
-        for week_num, week_dates in enumerate(weekly_groups, 1):
-            week_summaries_for_file = []
-            for date_folder in week_dates:
-                summary = build_analytics_report_for_date(date_folder)
-                if summary and summary['Total'] != "0 / 0% / ₹0.00 / 0.0%":
-                    week_summaries_for_file.append(summary)
-            
-            if week_summaries_for_file:
-                weekly_content += f"=== WEEK {week_num}: {week_dates[0]} to {week_dates[-1]} ===\n\n"
-                weekly_content += f"| {'Date':<6} | {'CPR Width':<10} | {'Index Call':<30} | {'Index Put':<30} | {'Reversal Call':<30} | {'Reversal Put':<30} | {'Total':<30} |\n"
-                weekly_content += f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|\n"
-                
-                for summary in week_summaries_for_file:
-                    weekly_content += f"| {summary['Date']:<6} | {summary['CPR_Width']:<10} | {summary['Index_Call']:<30} | {summary['Index_Put']:<30} | {summary['Reversal_Call']:<30} | {summary['Reversal_Put']:<30} | {summary['Total']:<30} |\n"
-                
-                # Add week totals
-                week_totals = calculate_totals(week_summaries_for_file)
-                weekly_content += f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|\n"
-                weekly_content += f"| {'TOTAL':<6} | {'':<10} | {week_totals['Index_Call']:<30} | {week_totals['Index_Put']:<30} | {week_totals['Reversal_Call']:<30} | {week_totals['Reversal_Put']:<30} | {week_totals['Total']:<30} |\n\n"
-        
-        # Add final consolidated summary
-        weekly_content += "=== FINAL CONSOLIDATED SUMMARY - ALL ACTIVE DATES ===\n\n"
-        weekly_content += f"| {'Date':<6} | {'CPR Width':<10} | {'Index Call':<30} | {'Index Put':<30} | {'Reversal Call':<30} | {'Reversal Put':<30} | {'Total':<30} |\n"
-        weekly_content += f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|\n"
-        
-        for summary in all_summaries:
-            weekly_content += f"| {summary['Date']:<6} | {summary['CPR_Width']:<10} | {summary['Index_Call']:<30} | {summary['Index_Put']:<30} | {summary['Reversal_Call']:<30} | {summary['Reversal_Put']:<30} | {summary['Total']:<30} |\n"
-        
-        # Add overall totals
-        weekly_content += f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|\n"
-        weekly_content += f"| {'TOTAL':<6} | {'':<10} | {totals['Index_Call']:<30} | {totals['Index_Put']:<30} | {totals['Reversal_Call']:<30} | {totals['Reversal_Put']:<30} | {totals['Total']:<30} |\n"
-        
-        try:
-            with open("final_analytics_report.txt", 'w') as f:
-                f.write(weekly_content)
-            print(f"\n💾 Comprehensive weekly report saved to: final_analytics_report.txt")
-
-            # Generate PDF report
-            generate_pdf_report(weekly_content, "final_analytics_report.pdf")
-            print(f"💾 Comprehensive weekly report saved to: final_analytics_report.pdf")
-        except Exception as e:
-            print(f"❌ Error saving weekly report: {e}")
 
 def calculate_totals(all_summaries):
     """Calculate totals across all dates for each strategy"""
@@ -435,11 +324,13 @@ def calculate_totals(all_summaries):
     formatted_totals = {}
     for strategy, data in totals.items():
         if data['count'] == 0:
-            formatted_totals[strategy] = "0 / 0% / ₹0.00 / 0.0%"
+            formatted_totals[strategy] = "0/0%/0/0%"
         else:
             win_rate = (data['profitable'] / data['count']) * 100
             total_pnl_pct = data['weighted_pnl_pct']  # This is now the sum of all P/L %
-            formatted_totals[strategy] = f"{data['count']} / {win_rate:.1f}% / ₹{data['total_pnl']:.2f} / {total_pnl_pct:.1f}%"
+            rounded_pnl = round(data['total_pnl'])
+            rounded_pnl_pct = round(total_pnl_pct)
+            formatted_totals[strategy] = f"{data['count']}/{win_rate:.1f}%/{rounded_pnl}/{rounded_pnl_pct}%"
     
     return formatted_totals
 
@@ -540,7 +431,7 @@ def generate_pdf_report(content, filename):
                         if 'Date' not in current_line:  # Skip if it's another header
                             data_row = [cell.strip() for cell in current_line.split('|')[1:-1]]
                             # Handle currency symbol replacement
-                            data_row = [cell.replace('₹', 'Rs.').replace('❌', 'X') for cell in data_row]
+                            data_row = [cell.replace('₹', '').replace('र', '').replace('❌', 'X') for cell in data_row]
                             table_data.append(data_row)
                         i += 1
                     elif current_line.startswith('|---'):
@@ -569,21 +460,21 @@ def generate_pdf_report(content, filename):
                         ('BACKGROUND', (0, 0), (-1, 0), colors.lightblue),
                         ('TEXTCOLOR', (0, 0), (-1, 0), colors.darkblue),
                         ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                        ('FONTSIZE', (0, 0), (-1, 0), 6),
+                        ('FONTNAME', (0, 0), (-1, 0), 'Times-Bold'),
+                        ('FONTSIZE', (0, 0), (-1, 0), 8),
                         
                         # Data styling
-                        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-                        ('FONTSIZE', (0, 1), (-1, -1), 4),
+                        ('FONTNAME', (0, 1), (-1, -1), 'Times-Roman'),
+                        ('FONTSIZE', (0, 1), (-1, -1), 7),
                         ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
                         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
                         ('WORDWRAP', (0, 0), (-1, -1), True),
                         
                         # Padding
-                        ('TOPPADDING', (0, 0), (-1, -1), 1),
-                        ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
-                        ('LEFTPADDING', (0, 0), (-1, -1), 1),
-                        ('RIGHTPADDING', (0, 0), (-1, -1), 1),
+                        ('TOPPADDING', (0, 0), (-1, -1), 2),
+                        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
+                        ('LEFTPADDING', (0, 0), (-1, -1), 2),
+                        ('RIGHTPADDING', (0, 0), (-1, -1), 2),
                     ]
                     
                     # Apply alternating colors and identify TOTAL rows
@@ -592,8 +483,8 @@ def generate_pdf_report(content, filename):
                         if len(row_data) > 0 and row_data[0] == 'TOTAL':  # TOTAL row
                             table_style.extend([
                                 ('BACKGROUND', (0, row_idx), (-1, row_idx), colors.lightyellow),
-                                ('FONTNAME', (0, row_idx), (-1, row_idx), 'Helvetica-Bold'),
-                                ('FONTSIZE', (0, row_idx), (-1, row_idx), 4),
+                                ('FONTNAME', (0, row_idx), (-1, row_idx), 'Times-Bold'),
+                                ('FONTSIZE', (0, row_idx), (-1, row_idx), 7),
                             ])
                         else:  # Regular data row
                             bg_color = colors.white if row_idx % 2 == 1 else colors.lightgrey
@@ -633,7 +524,7 @@ def generate_simple_pdf_fallback(content, filename):
     width, height = A4
     
     # Set font and size
-    c.setFont("Courier", 7)
+    c.setFont("Times-Roman", 8)
     
     # Calculate margins and line height
     margin = 40
@@ -670,7 +561,7 @@ def generate_simple_pdf_fallback(content, filename):
                 if page_line_count >= max_lines_per_page - 2:
                     c.drawText(text_object)
                     c.showPage()
-                    c.setFont("Courier", 7)
+                    c.setFont("Times-Roman", 8)
                     text_object = c.beginText(margin, height - margin)
                     page_line_count = 0
                 
@@ -681,7 +572,7 @@ def generate_simple_pdf_fallback(content, filename):
             if page_line_count >= max_lines_per_page - 2:
                 c.drawText(text_object)
                 c.showPage()
-                c.setFont("Courier", 7)
+                c.setFont("Times-Roman", 8)
                 text_object = c.beginText(margin, height - margin)
                 page_line_count = 0
             
@@ -695,16 +586,27 @@ def generate_simple_pdf_fallback(content, filename):
 
 def parse_trade_data_from_string(trade_string):
     """Parse trade data from formatted string back to numbers"""
-    if trade_string == "❌ No Signal" or trade_string.startswith("0 / 0%"):
+    if trade_string == "❌ No Signal" or trade_string.startswith("0/0%") or trade_string.startswith("0 / 0%"):
         return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'avg_pnl_pct': 0.0}
     
     try:
-        # Parse format: "count / win_rate% / ₹total_pnl / avg_pnl_pct%" or older format without P/L%
-        parts = trade_string.split(' / ')
-        count = int(parts[0])
-        win_rate = float(parts[1].replace('%', ''))
-        total_pnl = float(parts[2].replace('₹', ''))
-        avg_pnl_pct = float(parts[3].replace('%', '')) if len(parts) > 3 else 0.0
+        # Parse new compact format: "count/win_rate%/रtotal_pnl/avg_pnl_pct%" 
+        # or old format: "count / win_rate% / ₹total_pnl / avg_pnl_pct%"
+        if '/' in trade_string and ' / ' not in trade_string:
+            # New compact format
+            parts = trade_string.split('/')
+            count = int(parts[0])
+            win_rate = float(parts[1].replace('%', ''))
+            total_pnl = float(parts[2].replace('र', '').replace('R', '').replace('₹', ''))
+            avg_pnl_pct = float(parts[3].replace('%', '')) if len(parts) > 3 else 0.0
+        else:
+            # Old format with spaces
+            parts = trade_string.split(' / ')
+            count = int(parts[0])
+            win_rate = float(parts[1].replace('%', ''))
+            total_pnl = float(parts[2].replace('₹', '').replace('R', '').replace('र', ''))
+            avg_pnl_pct = float(parts[3].replace('%', '')) if len(parts) > 3 else 0.0
+        
         profitable = int((count * win_rate) / 100)
         
         return {
@@ -716,6 +618,128 @@ def parse_trade_data_from_string(trade_string):
         }
     except:
         return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'avg_pnl_pct': 0.0}
+
+def run_analysis():
+    """Build consolidated report grouped by weeks"""
+    print(f"\n{'='*120}")
+    print(f"BUILDING WEEKLY CPR-BASED ANALYTICS REPORT")
+    print(f"{'='*120}")
+    
+    # Get all date directories
+    data_dirs = glob.glob("data/*/")
+    date_folders = [d.split('/')[1] for d in data_dirs if len(d.split('/')[1]) == 4]  # ddmm format
+    date_folders.sort()
+    
+    print(f"Found {len(date_folders)} date directories: {date_folders}")
+    
+    # Group dates into weeks
+    weekly_groups = get_weekly_groups(date_folders)
+    
+    all_summaries = []
+    
+    # Process each week
+    for week_num, week_dates in enumerate(weekly_groups, 1):
+        print(f"\n{'='*80}")
+        print(f"WEEK {week_num}: {week_dates[0]} to {week_dates[-1]}")
+        print(f"{'='*80}")
+        
+        week_summaries = []
+        
+        # Process each date in the week
+        for date_folder in week_dates:
+            summary = build_analytics_report_for_date(date_folder)
+            if summary:
+                # Only include rows that have some activity (exclude zero totals)
+                if summary['Total'] != "0 / 0% / ₹0.00 / 0.0%":
+                    week_summaries.append(summary)
+                    all_summaries.append(summary)
+                    print(f"✅ {date_folder}: {summary['Total']}")
+                else:
+                    print(f"⚪ {date_folder}: No activity (excluded)")
+        
+        if week_summaries:
+            print(f"\n📊 WEEK {week_num} SUMMARY:")
+            print(f"| {'Date':<6} | {'CPR Width':<10} | {'Index Call':<30} | {'Index Put':<30} | {'Reversal Call':<30} | {'Reversal Put':<30} | {'Total':<30} |")
+            print(f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|")
+            
+            for summary in week_summaries:
+                print(f"| {summary['Date']:<6} | {summary['CPR_Width']:<10} | {summary['Index_Call']:<30} | {summary['Index_Put']:<30} | {summary['Reversal_Call']:<30} | {summary['Reversal_Put']:<30} | {summary['Total']:<30} |")
+            
+            # Calculate and display week totals
+            week_totals = calculate_totals(week_summaries)
+            print(f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|")
+            print(f"| {'TOTAL':<6} | {'':<10} | {week_totals['Index_Call']:<30} | {week_totals['Index_Put']:<30} | {week_totals['Reversal_Call']:<30} | {week_totals['Reversal_Put']:<30} | {week_totals['Total']:<30} |")
+    
+    # Create final consolidated table (excluding zero rows)
+    if all_summaries:
+        print(f"\n{'='*120}")
+        print(f"FINAL CONSOLIDATED ANALYTICS SUMMARY - ALL ACTIVE DATES")
+        print(f"{'='*120}")
+        print("Note: Dates with zero activity have been excluded")
+        
+        # Print table header
+        print(f"| {'Date':<6} | {'CPR Width':<10} | {'Index Call':<30} | {'Index Put':<30} | {'Reversal Call':<30} | {'Reversal Put':<30} | {'Total':<30} |")
+        print(f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|")
+        
+        # Print each row
+        for summary in all_summaries:
+            print(f"| {summary['Date']:<6} | {summary['CPR_Width']:<10} | {summary['Index_Call']:<30} | {summary['Index_Put']:<30} | {summary['Reversal_Call']:<30} | {summary['Reversal_Put']:<30} | {summary['Total']:<30} |")
+        
+        # Calculate totals
+        totals = calculate_totals(all_summaries)
+        
+        # Print totals row
+        print(f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|")
+        print(f"| {'TOTAL':<6} | {'':<10} | {totals['Index_Call']:<30} | {totals['Index_Put']:<30} | {totals['Reversal_Call']:<30} | {totals['Reversal_Put']:<30} | {totals['Total']:<30} |")
+        
+        # Build comprehensive weekly report content
+        weekly_content = "--- Weekly CPR-Based Analytics Report ---\n\n"
+        weekly_content += "Format: Trades/Win%/P/L%\n"
+        weekly_content += "Note: Dates with zero activity have been excluded\n\n"
+        
+        # Add each week's data
+        for week_num, week_dates in enumerate(weekly_groups, 1):
+            week_summaries_for_file = []
+            for date_folder in week_dates:
+                summary = build_analytics_report_for_date(date_folder)
+                if summary and summary['Total'] != "0 / 0% / ₹0.00 / 0.0%":
+                    week_summaries_for_file.append(summary)
+            
+            if week_summaries_for_file:
+                weekly_content += f"=== WEEK {week_num}: {week_dates[0]} to {week_dates[-1]} ===\n\n"
+                weekly_content += f"| {'Date':<6} | {'CPR Width':<10} | {'Index Call':<30} | {'Index Put':<30} | {'Reversal Call':<30} | {'Reversal Put':<30} | {'Total':<30} |\n"
+                weekly_content += f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|\n"
+                
+                for summary in week_summaries_for_file:
+                    weekly_content += f"| {summary['Date']:<6} | {summary['CPR_Width']:<10} | {summary['Index_Call']:<30} | {summary['Index_Put']:<30} | {summary['Reversal_Call']:<30} | {summary['Reversal_Put']:<30} | {summary['Total']:<30} |\n"
+                
+                # Add week totals
+                week_totals = calculate_totals(week_summaries_for_file)
+                weekly_content += f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|\n"
+                weekly_content += f"| {'TOTAL':<6} | {'':<10} | {week_totals['Index_Call']:<30} | {week_totals['Index_Put']:<30} | {week_totals['Reversal_Call']:<30} | {week_totals['Reversal_Put']:<30} | {week_totals['Total']:<30} |\n\n"
+        
+        # Add final consolidated summary
+        weekly_content += "=== FINAL CONSOLIDATED SUMMARY - ALL ACTIVE DATES ===\n\n"
+        weekly_content += f"| {'Date':<6} | {'CPR Width':<10} | {'Index Call':<30} | {'Index Put':<30} | {'Reversal Call':<30} | {'Reversal Put':<30} | {'Total':<30} |\n"
+        weekly_content += f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|\n"
+        
+        for summary in all_summaries:
+            weekly_content += f"| {summary['Date']:<6} | {summary['CPR_Width']:<10} | {summary['Index_Call']:<30} | {summary['Index_Put']:<30} | {summary['Reversal_Call']:<30} | {summary['Reversal_Put']:<30} | {summary['Total']:<30} |\n"
+        
+        # Add overall totals
+        weekly_content += f"|{'-'*8}|{'-'*12}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|{'-'*32}|\n"
+        weekly_content += f"| {'TOTAL':<6} | {'':<10} | {totals['Index_Call']:<30} | {totals['Index_Put']:<30} | {totals['Reversal_Call']:<30} | {totals['Reversal_Put']:<30} | {totals['Total']:<30} |\n"
+        
+        try:
+            with open("final_analytics_report.txt", 'w') as f:
+                f.write(weekly_content)
+            print(f"\n💾 Comprehensive weekly report saved to: final_analytics_report.txt")
+
+            # Generate PDF report
+            generate_pdf_report(weekly_content, "final_analytics_report.pdf")
+            print(f"💾 Comprehensive weekly report saved to: final_analytics_report.pdf")
+        except Exception as e:
+            print(f"❌ Error saving weekly report: {e}")
 
 if __name__ == "__main__":
     run_analysis()

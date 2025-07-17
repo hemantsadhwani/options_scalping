@@ -1,7 +1,7 @@
 Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High,Big Move
 2025-07-03 09:24:00,115.80,2025-07-03 09:25:00,108.85,-6.95,-6.00%,SL Hit,Put Option (Enhanced Hybrid Premium),108.85,108.85,125.45,True
-2025-07-03 10:47:00,45.75,2025-07-03 10:50:00,43.00,-2.75,-6.00%,Trailing SL,Put Option (Enhanced Hybrid Premium),43.00,43.00,51.95,True
-2025-07-03 11:30:00,44.20,2025-07-03 11:42:00,53.04,8.84,20.00%,Trailing SL,Put Option (Enhanced Hybrid Premium),41.55,53.04,83.15,True
-2025-07-03 12:17:00,71.85,2025-07-03 12:27:00,67.54,-4.31,-6.00%,Trailing SL,Put Option (Enhanced Hybrid Premium),67.54,67.54,82.30,True
-2025-07-03 12:51:00,65.00,2025-07-03 12:52:00,61.10,-3.90,-6.00%,SL Hit,Put Option (Enhanced Hybrid Premium),61.10,61.10,65.15,True
-2025-07-03 13:50:00,62.60,2025-07-03 13:57:00,75.12,12.52,20.00%,Trailing SL,Put Option (Enhanced Hybrid Premium),58.84,75.12,93.45,True
+2025-07-03 10:47:00,45.75,2025-07-03 11:00:00,43.09,-2.66,-5.82%,Trailing SL,Put Option (Enhanced Hybrid Premium),38.89,43.09,55.10,True
+2025-07-03 11:30:00,44.20,2025-07-03 11:42:00,53.04,8.84,20.00%,Trailing SL,Put Option (Enhanced Hybrid Premium),37.57,53.04,83.15,True
+2025-07-03 12:17:00,71.85,2025-07-03 12:27:00,66.10,-5.75,-8.00%,Trailing SL,Put Option (Enhanced Hybrid Premium),61.07,66.10,82.30,True
+2025-07-03 12:51:00,65.00,2025-07-03 13:16:00,78.00,13.00,20.00%,Trailing SL,Put Option (Enhanced Hybrid Premium),55.25,78.00,96.20,True
+2025-07-03 13:50:00,62.60,2025-07-03 13:57:00,75.12,12.52,20.00%,Trailing SL,Put Option (Enhanced Hybrid Premium),53.21,75.12,93.45,True
