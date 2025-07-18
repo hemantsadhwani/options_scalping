@@ -137,3 +137,19 @@ Entry Time	Entry Price	Exit Time	Exit Price	P/L	P/L %	Exit Reason	Trade Type	Ini
 i would encorage to build another file ENHANCED_TRADING_SYSTEM_SUMMARY_FOR_SL.md
 
 
+Can you please improve ,.tradeview/NSE_NIFTY250717P25200.html displaying "List of trades" from ./tradeview/trades_list.csv and add "Entry long" arrow up and "Exit long" arrow down on
+candilstick chart. You should use column "Signal" to be displayed on Entry or Exit arrow. For examplle on "Exit Long" arrow "Take Profit Hit" or "Stop Loss Hit"
+  ./tradeview/NSE_NIFTY250717P25200.html same way as it is displayed in tradeview (https://www.tradingview.com/chart/3YNNWBgB/)?
+
+
+I see a issue why entry/exit time arrows are not overlayed on candilstick char.  
+In List of Trades - issue could be "Time: Synthetic Trade Time" Why it is not showing entry long time ?
+rade #1 - Entry long
+Long
+Time: Synthetic Trade Time
+Price: ₹34.75
+Quantity: 37
+P&L: ₹-12063.1 (-0.1219%)
+Run-up: ₹35065.18 (0.3635%)
+Drawdown: ₹-9057.32 (-0.0939%)
+Cumulative P&L: ₹35012.56 (0.3501%)

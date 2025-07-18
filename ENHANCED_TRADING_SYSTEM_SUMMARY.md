@@ -3,9 +3,6 @@
 ## Overview
 This document summarizes the comprehensive improvements made to the options trading system to better identify and manage BigMove vs Average signals, with a focus on maximizing profits from BigMove trades while minimizing losses on Average signals.
 
-## Key Problem Addressed
-The original 1107 put trade at 9:52 exited at only 13.33% profit (85.00 exit price) when it could have trailed to 146.75 (95.67% profit) - a missed opportunity of +82.34 percentage points.
-
 ## Enhanced Features Implemented
 
 ### 1. Enhanced BigMove Detection (`detect_big_move()`)

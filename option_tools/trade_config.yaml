@@ -7,7 +7,7 @@ STRATEGY_TYPE: 'HYBRID_PREMIUM'
 PREMIUM_TIERS:
   LOW:
     threshold: 100
-    sl_percent: 15.0
+    sl_percent: 25.0
     atr_mult: 2.5
     breakeven_delay: 0
     trail_start_pct: 8.0  # Reduced for quicker trailing activation

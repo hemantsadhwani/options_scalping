@@ -1,15 +1,15 @@
 Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High,Big Move
-2025-07-16 09:33:00,48.35,2025-07-16 09:42:00,48.35,0.0,0.00%,SL Hit,Call Option (Enhanced Hybrid Premium),41.1,48.35,53.35,False
-2025-07-16 10:18:00,42.25,2025-07-16 10:23:00,40.75,-1.5,-3.55%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),35.91,42.25,46.0,False
-2025-07-16 10:41:00,39.4,2025-07-16 10:42:00,37.55,-1.85,-4.70%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),33.49,33.49,39.4,False
-2025-07-16 10:49:00,36.15,2025-07-16 10:56:00,36.0,-0.15,-0.41%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),30.73,36.15,38.35,False
-2025-07-16 11:24:00,37.65,2025-07-16 11:31:00,37.65,0.0,0.00%,SL Hit,Call Option (Enhanced Hybrid Premium),32.0,37.65,40.9,False
-2025-07-16 12:27:00,54.6,2025-07-16 12:33:00,64.6,10.0,18.32%,Fixed TP (Average Signal),Call Option (Enhanced Hybrid Premium),46.41,54.6,68.1,False
-2025-07-16 13:37:00,56.9,2025-07-16 13:41:00,66.9,10.0,17.57%,Fixed TP (Average Signal),Call Option (Enhanced Hybrid Premium),48.36,56.9,67.15,False
-2025-07-16 14:32:00,75.4,2025-07-16 14:34:00,72.0,-3.4,-4.51%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),64.09,64.09,75.8,False
-2025-07-16 14:36:00,74.9,2025-07-16 14:39:00,73.2,-1.7,-2.27%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),63.67,63.67,75.5,False
-2025-07-16 14:43:00,78.7,2025-07-16 14:51:00,67.9,-10.8,-13.72%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),66.89,66.89,82.1,False
-2025-07-16 14:57:00,73.4,2025-07-16 15:00:00,68.35,-5.05,-6.88%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),62.39,62.39,78.3,False
+2025-07-16 09:33:00,48.35,2025-07-16 09:42:00,48.35,0.0,0.00%,SL Hit,Call Option (Enhanced Hybrid Premium),36.26,48.35,53.35,False
+2025-07-16 10:18:00,42.25,2025-07-16 10:23:00,40.75,-1.5,-3.55%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),31.69,42.25,46.0,False
+2025-07-16 10:41:00,39.4,2025-07-16 10:42:00,37.55,-1.85,-4.70%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),29.55,29.55,39.4,False
+2025-07-16 10:49:00,36.15,2025-07-16 10:56:00,36.0,-0.15,-0.41%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),27.11,36.15,38.35,False
+2025-07-16 11:24:00,37.65,2025-07-16 11:31:00,37.65,0.0,0.00%,SL Hit,Call Option (Enhanced Hybrid Premium),28.24,37.65,40.9,False
+2025-07-16 12:27:00,54.6,2025-07-16 12:33:00,64.6,10.0,18.32%,Fixed TP (Average Signal),Call Option (Enhanced Hybrid Premium),40.95,54.6,68.1,False
+2025-07-16 13:37:00,56.9,2025-07-16 13:41:00,66.9,10.0,17.57%,Fixed TP (Average Signal),Call Option (Enhanced Hybrid Premium),42.67,56.9,67.15,False
+2025-07-16 14:32:00,75.4,2025-07-16 14:34:00,72.0,-3.4,-4.51%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),56.55,56.55,75.8,False
+2025-07-16 14:36:00,74.9,2025-07-16 14:39:00,73.2,-1.7,-2.27%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),56.18,56.18,75.5,False
+2025-07-16 14:43:00,78.7,2025-07-16 14:51:00,67.9,-10.8,-13.72%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),59.03,59.03,82.1,False
+2025-07-16 14:57:00,73.4,2025-07-16 15:00:00,68.35,-5.05,-6.88%,Williams Exit (Average Signal),Call Option (Enhanced Hybrid Premium),55.05,55.05,78.3,False
 2025-07-16 09:57:00,154.35,2025-07-16 10:01:00,164.35,10.00,6.48%,Fixed TP (Average Signal),Put Option (Enhanced Hybrid Premium),145.09,145.09,166.20,False
 2025-07-16 10:28:00,167.00,2025-07-16 10:30:00,160.05,-6.95,-4.16%,Williams Exit (Average Signal),Put Option (Enhanced Hybrid Premium),156.98,156.98,168.55,False
 2025-07-16 11:12:00,169.50,2025-07-16 11:13:00,162.95,-6.55,-3.86%,Williams Exit (Average Signal),Put Option (Enhanced Hybrid Premium),159.33,159.33,171.15,False
@@ -21,4 +21,4 @@ Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Ini
 2025-07-16 13:54:00,104.20,2025-07-16 14:01:00,102.70,-1.50,-1.44%,Williams Exit (Average Signal),Put Option (Enhanced Hybrid Premium),97.95,104.20,111.00,False
 2025-07-16 14:06:00,103.00,2025-07-16 14:08:00,99.35,-3.65,-3.54%,Williams Exit (Average Signal),Put Option (Enhanced Hybrid Premium),96.82,96.82,104.40,False
 2025-07-16 14:11:00,102.40,2025-07-16 14:12:00,96.26,-6.14,-6.00%,SL Hit,Put Option (Enhanced Hybrid Premium),96.26,96.26,102.40,False
-2025-07-16 14:15:00,91.55,2025-07-16 14:18:00,88.10,-3.45,-3.77%,Williams Exit (Average Signal),Put Option (Enhanced Hybrid Premium),77.82,91.55,95.85,False
+2025-07-16 14:15:00,91.55,2025-07-16 14:18:00,88.10,-3.45,-3.77%,Williams Exit (Average Signal),Put Option (Enhanced Hybrid Premium),68.66,91.55,95.85,False

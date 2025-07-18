@@ -1,10 +1,10 @@
 Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High,Big Move
 2025-06-24 10:21:00,105.20,2025-06-24 10:22:00,98.89,-6.31,-6.00%,SL Hit,Put Option (Enhanced Hybrid Premium),98.89,98.89,105.20,False
-2025-06-24 11:28:00,86.30,2025-06-24 11:33:00,76.90,-9.40,-10.89%,Williams Exit (Average Signal),Put Option (Enhanced Hybrid Premium),73.35,73.35,86.30,False
-2025-06-24 11:37:00,80.00,2025-06-24 11:41:00,80.00,0.00,0.00%,SL Hit,Put Option (Enhanced Hybrid Premium),68.00,80.00,83.75,False
-2025-06-24 12:17:00,68.65,2025-06-24 12:23:00,68.65,0.00,0.00%,SL Hit,Put Option (Enhanced Hybrid Premium),58.35,68.65,73.65,False
-2025-06-24 13:01:00,96.10,2025-06-24 13:07:00,79.55,-16.55,-17.22%,Williams Exit (Average Signal),Put Option (Enhanced Hybrid Premium),81.68,81.68,98.95,False
-2025-06-24 13:12:00,85.05,2025-06-24 13:14:00,95.05,10.00,11.76%,Fixed TP (Average Signal),Put Option (Enhanced Hybrid Premium),72.29,72.29,106.35,False
+2025-06-24 11:28:00,86.30,2025-06-24 11:33:00,76.90,-9.40,-10.89%,Williams Exit (Average Signal),Put Option (Enhanced Hybrid Premium),64.72,64.72,86.30,False
+2025-06-24 11:37:00,80.00,2025-06-24 11:41:00,80.00,0.00,0.00%,SL Hit,Put Option (Enhanced Hybrid Premium),60.00,80.00,83.75,False
+2025-06-24 12:17:00,68.65,2025-06-24 12:23:00,68.65,0.00,0.00%,SL Hit,Put Option (Enhanced Hybrid Premium),51.49,68.65,73.65,False
+2025-06-24 13:01:00,96.10,2025-06-24 13:07:00,79.55,-16.55,-17.22%,Williams Exit (Average Signal),Put Option (Enhanced Hybrid Premium),72.07,72.07,98.95,False
+2025-06-24 13:12:00,85.05,2025-06-24 13:14:00,95.05,10.00,11.76%,Fixed TP (Average Signal),Put Option (Enhanced Hybrid Premium),63.79,63.79,106.35,False
 2025-06-24 14:03:00,165.35,2025-06-24 14:04:00,175.35,10.00,6.05%,Fixed TP (Average Signal),Put Option (Enhanced Hybrid Premium),155.43,155.43,188.65,False
 2025-06-24 14:38:00,171.35,2025-06-24 14:39:00,165.00,-6.35,-3.71%,Williams Exit (Average Signal),Put Option (Enhanced Hybrid Premium),161.07,161.07,175.20,False
 2025-06-24 14:44:00,168.35,2025-06-24 15:15:00,186.26,17.91,10.64%,Trailing SL,Put Option (Enhanced Hybrid Premium),158.25,186.26,210.65,True
