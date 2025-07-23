@@ -1,0 +1,51 @@
+### 1. Required Indicators for the System
+Average True Range (ATR):
+   - Period: 5
+   - Purpose: Used for calculating the trailing stop distance.
+Swing Low:
+   - Period: 5
+   - Purpose: Used for setting the initial stop-loss.
+
+### 2. Required State Variables for the System
+The Python class must maintain the following state variables for each trade:
+
+- entryPrice: The price at which the current position was entered.
+- highestPrice: The highest high or close price reached since the trailing stop was activated.
+- fixedStopLoss: The calculated initial stop-loss level for the trade.
+- trailingStop: The calculated current trailing stop-loss level.
+- stopLevel: The single, currently active stop price (this will be equal to either fixedStopLoss or trailingStop).
+- isTrailingActive: A boolean flag, False initially, which becomes True permanently for the trade once the profit threshold is met.
+- waitingAfterStopLoss: A boolean flag to manage the post-exit cooldown period.
+- lastStopLossBar: The bar index/timestamp when the last stop-loss was hit.
+
+### 3. The Two-Phase Stop-Loss System
+The core of the management system is a stop-loss that evolves based on the trade's performance.
+
+Phase 1: Initial Fixed Stop-Loss
+    - Activation: This phase is active immediately upon trade entry.
+    - Calculation: The fixedStopLoss level is set at the moment of entry. It is calculated as the minimum (more conservative) of two values:
+        - The swingLow (the lowest low of the 5 bars preceding entry).
+        - A fixed 5% loss from the entry price: entryPrice * (1 - 0.05).
+    - During this phase, the active stopLevel is equal to this fixedStopLoss. This level does not change.
+
+Phase 2: Dynamic ATR Trailing Stop
+    1) Activation Trigger: The system permanently switches from Phase 1 to Phase 2 at the exact moment the unrealized profit of the open position meets or exceeds 5%.
+            Profit Formula: currentProfit = ((current_price - entryPrice) / entryPrice) * 100
+            Switch Condition: if currentProfit >= 5.0, set isTrailingActive = true. This is a one-way switch.
+    2) Trailing Logic: Once active, the trailingStop is recalculated on every bar.
+        Track Peak Price: The system must keep track of highestPrice, which is the highest price (high or close) the asset has reached since trailing began.
+        Select ATR Multiplier: The ATR multiplier is chosen dynamically based on the current profit percentage using the following "slab" system:
+            If currentProfit < 10%: Multiplier = 1.8
+            If 10% <= currentProfit < 25%: Multiplier = 3.0 (Widens the trail)
+            If currentProfit >= 25%: Multiplier = 2.2 (Tightens the trail to lock in gains)
+    3) Calculate New Stop: The potential new stop level is calculated as:
+        newTrailingStop = highestPrice - (ATR(5) * selected_multiplier)
+    4) Apply the Ratchet Rule: The trailingStop is only updated if the newly calculated level is higher than the previous trailingStop.
+        if newTrailingStop > trailingStop: trailingStop = newTrailingStop
+        (This ensures the stop-loss only ever moves up, never down).
+    5) The active stopLevel is now equal to this updated trailingStop.
+
+
+### 4. Final Exit Condition
+A position must be closed immediately if the following condition is met:
+    - Stop-Loss Hit: The current bar's low price touches or crosses below the active stopLevel.   

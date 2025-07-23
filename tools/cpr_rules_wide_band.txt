@@ -33,7 +33,8 @@ These zones act as resistance & support levels for high or low of price, making 
 - For Call trades: Check if candle's LOW or HIGH is within any of these zones
 
 Note: 
-- proximity_pct is set to 0.06 (6%) to create wider bands that help catch price bouncing or rejecting
+- Primary zones use proximity_pct of 0.03 (3%): Pivot/TC Support Zone, Pivot/BC Resistance Zone
+- Extended zones use proximity_pct of 0.06 (6%): PDH/R1/R2/R3/R4 Resistance or Support Zones, PDL/S1/S2/S3/S4 Resistance or Support Zones
 - For wide CPR bands (>50), all primary zones (S1, PDL, R1, PDH) are treated as independent zones without trend direction requirements
 - Pivot/TC and Pivot/BC zones remain as primary zones regardless of trend direction
 - Extended zones (R2/R3/R4 and S2/S3/S4) are treated as both support and resistance without trend direction requirements

@@ -115,8 +115,99 @@ def get_trade_data(file_path):
         print(f"Error reading {file_path}: {e}")
         return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}
 
+def determine_trade_direction_at_time(close_price, daily_tc, daily_bc):
+    """Determine trade direction based on CPR analysis for a specific candle close price"""
+    if close_price > daily_tc:
+        return "Call"  # Above TC - Bullish, so take Put trades (contrarian)
+    elif close_price < daily_bc:
+        return "Put"   # Below BC - Bearish, so take Call trades (contrarian)
+    else:
+        return "Mixed" # Between BC and TC - Mixed signals, take both
+        
+def determine_trade_direction_candlewise(date_folder, cpr_data):
+    """Determine trade direction based on candlewise CPR analysis"""
+    if not cpr_data:
+        return {
+            'index_direction': 'Unknown',
+            'reversal_call': False,
+            'reversal_put': False,
+            'continuation_call': False,
+            'continuation_put': False
+        }
+    
+    try:
+        utc_file = f"data/{date_folder}/tradeview_utc.csv"
+        if not os.path.exists(utc_file):
+            return {
+                'index_direction': 'Unknown',
+                'reversal_call': False,
+                'reversal_put': False,
+                'continuation_call': False,
+                'continuation_put': False
+            }
+        
+        price_df = pd.read_csv(utc_file)
+        if price_df.empty:
+            return {
+                'index_direction': 'Unknown',
+                'reversal_call': False,
+                'reversal_put': False,
+                'continuation_call': False,
+                'continuation_put': False
+            }
+        
+        daily_tc = cpr_data['daily_tc']
+        daily_bc = cpr_data['daily_bc']
+        high = cpr_data['high']
+        low = cpr_data['low']
+        
+        # Check candlewise signals
+        reversal_call_signal = False
+        reversal_put_signal = False
+        
+        for _, candle in price_df.iterrows():
+            close_price = candle['close']
+            
+            # Contrarian logic: 
+            # If close < BC at any point → Take Call trades (expecting bounce up)
+            # If close > TC at any point → Take Put trades (expecting pullback down)
+            if close_price < daily_bc:
+                reversal_call_signal = True
+            if close_price > daily_tc:
+                reversal_put_signal = True
+        
+        # Index Direction Logic
+        if high > daily_tc and low > daily_bc:
+            index_direction = "Call"  # Bullish day
+        elif high < daily_tc and low < daily_bc:
+            index_direction = "Put"   # Bearish day
+        else:
+            index_direction = "Mixed" # Mixed signals
+        
+        return {
+            'index_direction': index_direction,
+            'reversal_call': reversal_call_signal,
+            'reversal_put': reversal_put_signal,
+            'continuation_call': reversal_call_signal,  # Same logic for now
+            'continuation_put': reversal_put_signal,    # Same logic for now
+            'high': high,
+            'low': low,
+            'daily_tc': daily_tc,
+            'daily_bc': daily_bc
+        }
+        
+    except Exception as e:
+        print(f"Error in candlewise direction analysis for {date_folder}: {e}")
+        return {
+            'index_direction': 'Unknown',
+            'reversal_call': False,
+            'reversal_put': False,
+            'continuation_call': False,
+            'continuation_put': False
+        }
+
 def determine_trade_direction(cpr_data):
-    """Determine trade direction based on CPR analysis"""
+    """Determine trade direction based on CPR analysis - LEGACY for reversal strategies"""
     if not cpr_data:
         return {
             'index_direction': 'Unknown',
@@ -131,7 +222,7 @@ def determine_trade_direction(cpr_data):
     daily_tc = cpr_data['daily_tc']
     daily_bc = cpr_data['daily_bc']
     
-    # Index Direction Logic
+    # Index Direction Logic - Keep legacy logic for reversal strategies
     if high > daily_tc and low > daily_bc:
         index_direction = "Call"  # Bullish day
     elif high < daily_tc and low < daily_bc:
@@ -157,8 +248,112 @@ def determine_trade_direction(cpr_data):
         'daily_bc': daily_bc
     }
 
+def get_index_trades_by_type_with_candlewise_direction(date_folder, cpr_data):
+    """Get index trades separated by Call/Put from trades_crp folder with candlewise direction detection"""
+    try:
+        trades_file = f"data/{date_folder}/trades_crp/rev_v1_trades.csv"
+        utc_file = f"data/{date_folder}/tradeview_utc.csv"
+        
+        if not os.path.exists(trades_file) or not os.path.exists(utc_file):
+            return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}, {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}
+        
+        # Load trades and price data
+        trades_df = pd.read_csv(trades_file)
+        price_df = pd.read_csv(utc_file)
+        
+        if trades_df.empty or price_df.empty:
+            return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}, {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}
+        
+        # Convert datetime columns
+        trades_df['Entry Time'] = pd.to_datetime(trades_df['Entry Time'])
+        price_df['datetime'] = pd.to_datetime(price_df['datetime'])
+        
+        # Get CPR values
+        daily_tc = cpr_data['daily_tc']
+        daily_bc = cpr_data['daily_bc']
+        
+        # Filter trades that should be included based on candlewise direction
+        valid_call_trades = []
+        valid_put_trades = []
+        
+        for _, trade in trades_df.iterrows():
+            entry_time = trade['Entry Time']
+            trade_type = trade['Trade Type']
+            
+            # Find the closest price candle to the trade entry time
+            time_diff = abs(price_df['datetime'] - entry_time)
+            closest_idx = time_diff.idxmin()
+            closest_candle = price_df.loc[closest_idx]
+            close_price = closest_candle['close']
+            
+            # Determine direction at trade entry time
+            direction_at_entry = determine_trade_direction_at_time(close_price, daily_tc, daily_bc)
+            
+            # Apply contrarian logic: include trades based on direction
+            if 'Call' in trade_type:
+                # Call trades are valid when direction is "Put" or "Mixed"
+                if direction_at_entry in ['Put', 'Mixed']:
+                    valid_call_trades.append(trade)
+            elif 'Put' in trade_type:
+                # Put trades are valid when direction is "Call" or "Mixed"
+                if direction_at_entry in ['Call', 'Mixed']:
+                    valid_put_trades.append(trade)
+        
+        # Convert back to DataFrames
+        call_trades = pd.DataFrame(valid_call_trades)
+        put_trades = pd.DataFrame(valid_put_trades)
+        
+        # Calculate statistics for call trades
+        call_avg_pnl_pct = 0.0
+        if len(call_trades) > 0 and 'P/L %' in call_trades.columns:
+            try:
+                call_pnl_pct = call_trades['P/L %'].astype(str).str.replace('%', '')
+                call_pnl_numeric = pd.to_numeric(call_pnl_pct, errors='coerce')
+                call_avg_pnl_pct = call_pnl_numeric.sum()
+                if pd.isna(call_avg_pnl_pct):
+                    call_avg_pnl_pct = 0.0
+            except:
+                call_avg_pnl_pct = 0.0
+        
+        # Calculate statistics for put trades
+        put_avg_pnl_pct = 0.0
+        if len(put_trades) > 0 and 'P/L %' in put_trades.columns:
+            try:
+                put_pnl_pct = put_trades['P/L %'].astype(str).str.replace('%', '')
+                put_pnl_numeric = pd.to_numeric(put_pnl_pct, errors='coerce')
+                put_avg_pnl_pct = put_pnl_numeric.sum()
+                if pd.isna(put_avg_pnl_pct):
+                    put_avg_pnl_pct = 0.0
+            except:
+                put_avg_pnl_pct = 0.0
+        
+        call_data = {
+            'count': len(call_trades),
+            'profitable': len(call_trades[call_trades['P/L'] > 0]) if len(call_trades) > 0 else 0,
+            'total_pnl': call_trades['P/L'].sum() if len(call_trades) > 0 else 0,
+            'win_rate': (len(call_trades[call_trades['P/L'] > 0]) / len(call_trades)) * 100 if len(call_trades) > 0 else 0,
+            'avg_pnl_pct': call_avg_pnl_pct
+        }
+        
+        put_data = {
+            'count': len(put_trades),
+            'profitable': len(put_trades[put_trades['P/L'] > 0]) if len(put_trades) > 0 else 0,
+            'total_pnl': put_trades['P/L'].sum() if len(put_trades) > 0 else 0,
+            'win_rate': (len(put_trades[put_trades['P/L'] > 0]) / len(put_trades)) * 100 if len(put_trades) > 0 else 0,
+            'avg_pnl_pct': put_avg_pnl_pct
+        }
+        
+        return call_data, put_data
+        
+    except Exception as e:
+        print(f"Error processing candlewise index trades for {date_folder}: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}, {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}
+
 def get_index_trades_by_type(date_folder):
-    """Get index trades separated by Call/Put from trades_crp folder"""
+    """Get index trades separated by Call/Put from trades_crp folder - LEGACY VERSION"""
     try:
         file_path = f"data/{date_folder}/trades_crp/rev_v1_trades.csv"
         if os.path.exists(file_path):
@@ -251,6 +446,125 @@ def calculate_row_total(strategy_data_list):
         'avg_pnl_pct': total_pnl_pct
     }
 
+def check_trade_overlap(trade_time, index_trades_df):
+    """Check if a reversal trade overlaps with any active index trades"""
+    if index_trades_df.empty:
+        return False
+    
+    trade_entry = pd.to_datetime(trade_time)
+    
+    for _, index_trade in index_trades_df.iterrows():
+        index_entry = pd.to_datetime(index_trade['Entry Time'])
+        index_exit = pd.to_datetime(index_trade['Exit Time'])
+        
+        # Check if reversal trade entry time falls within index trade duration
+        if index_entry <= trade_entry <= index_exit:
+            return True
+    
+    return False
+
+def get_non_overlapping_reversal_trades(date_folder, trade_type='call'):
+    """Get reversal trades that don't overlap with index trades AND pass candlewise CPR filtering"""
+    try:
+        # Load reversal trades
+        reversal_file = f"data/{date_folder}/{trade_type}/trades/{trade_type}_rev_v1_trades.csv"
+        if not os.path.exists(reversal_file):
+            return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}
+        
+        reversal_df = pd.read_csv(reversal_file)
+        if reversal_df.empty:
+            return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}
+        
+        # Load CPR data for candlewise filtering
+        utc_file = f"data/{date_folder}/tradeview_utc.csv"
+        if not os.path.exists(utc_file):
+            return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}
+        
+        price_df = pd.read_csv(utc_file)
+        if price_df.empty:
+            return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}
+        
+        # Get CPR values
+        daily_tc = price_df['Daily TC'].iloc[0]
+        daily_bc = price_df['Daily BC'].iloc[0]
+        price_df['datetime'] = pd.to_datetime(price_df['datetime'])
+        
+        # Load index trades to check for overlaps
+        index_file = f"data/{date_folder}/trades_crp/rev_v1_trades.csv"
+        index_trades_of_type = pd.DataFrame()
+        if os.path.exists(index_file):
+            index_df = pd.read_csv(index_file)
+            if not index_df.empty:
+                # Filter index trades by type (Call or Put)
+                trade_type_filter = 'Call' if trade_type == 'call' else 'Put'
+                index_trades_of_type = index_df[index_df['Trade Type'].str.contains(trade_type_filter, na=False)]
+        
+        # Convert datetime columns
+        reversal_df['Entry Time'] = pd.to_datetime(reversal_df['Entry Time'])
+        
+        # Filter trades based on candlewise CPR logic AND overlap detection
+        valid_trades = []
+        for _, reversal_trade in reversal_df.iterrows():
+            reversal_entry = reversal_trade['Entry Time']
+            
+            # Find closest candle for CPR analysis
+            time_diff = abs(price_df['datetime'] - reversal_entry)
+            closest_idx = time_diff.idxmin()
+            closest_candle = price_df.loc[closest_idx]
+            close_price = closest_candle['close']
+            
+            # Apply candlewise CPR logic - CORRECTED
+            cpr_valid = False
+            if trade_type == 'call':
+                # Call trades: REJECT if close < Daily BC, ACCEPT otherwise
+                cpr_valid = close_price >= daily_bc
+            else:  # put
+                # Put trades: REJECT if close > Daily TC, ACCEPT otherwise  
+                cpr_valid = close_price <= daily_tc
+            
+            # Skip if CPR logic says no signal
+            if not cpr_valid:
+                continue
+            
+            # Check for overlap with index trades
+            if not check_trade_overlap(reversal_trade['Entry Time'], index_trades_of_type):
+                valid_trades.append(reversal_trade)
+        
+        if not valid_trades:
+            return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}
+        
+        # Convert back to DataFrame and calculate statistics
+        filtered_df = pd.DataFrame(valid_trades)
+        
+        count = len(filtered_df)
+        profitable = len(filtered_df[filtered_df['P/L'] > 0])
+        total_pnl = filtered_df['P/L'].sum()
+        win_rate = (profitable / count) * 100 if count > 0 else 0.0
+        
+        # Calculate P/L %
+        avg_pnl_pct = 0.0
+        if 'P/L %' in filtered_df.columns:
+            try:
+                pnl_pct_series = filtered_df['P/L %'].astype(str).str.replace('%', '')
+                pnl_pct_numeric = pd.to_numeric(pnl_pct_series, errors='coerce')
+                avg_pnl_pct = pnl_pct_numeric.sum()
+                if pd.isna(avg_pnl_pct):
+                    avg_pnl_pct = 0.0
+            except:
+                avg_pnl_pct = 0.0
+        
+        return {
+            'count': count,
+            'profitable': profitable,
+            'total_pnl': total_pnl,
+            'win_rate': win_rate,
+            'avg_pnl_pct': avg_pnl_pct
+        }
+        
+    except Exception as e:
+        print(f"Error processing non-overlapping reversal trades for {date_folder}: {e}")
+        return {'count': 0, 'profitable': 0, 'total_pnl': 0.0, 'win_rate': 0.0, 'avg_pnl_pct': 0.0}
+
 def build_analytics_report_for_date(date_folder):
     """Build comprehensive analytics report for a single date"""
     # Get CPR data
@@ -258,31 +572,32 @@ def build_analytics_report_for_date(date_folder):
     if not cpr_data:
         return None
     
-    # Determine trade directions
-    trade_logic = determine_trade_direction(cpr_data)
+    # Determine trade directions using candlewise analysis for ALL trades
+    trade_logic = determine_trade_direction_candlewise(date_folder, cpr_data)
     
     # Get trade data for all strategies
     base_path = f"data/{date_folder}"
     
-    # Index trades (from trades_crp folder)
-    index_call_data, index_put_data = get_index_trades_by_type(date_folder)
+    # Index trades (from trades_crp folder) - Using candlewise direction detection
+    index_call_data, index_put_data = get_index_trades_by_type_with_candlewise_direction(date_folder, cpr_data)
     
-    # Reversal trades
-    reversal_call_data = get_trade_data(f"{base_path}/call/trades/call_rev_v2_trades.csv")
-    reversal_put_data = get_trade_data(f"{base_path}/put/trades/put_rev_v2_trades.csv")
+    # Reversal trades - NOW using candlewise logic + overlap filtering
+    reversal_call_data = get_non_overlapping_reversal_trades(date_folder, 'call')
+    reversal_put_data = get_non_overlapping_reversal_trades(date_folder, 'put')
     
-    # Format trade data
-    index_call_formatted = format_trade_data(index_call_data, trade_logic['index_direction'] in ['Call', 'Mixed'])
-    index_put_formatted = format_trade_data(index_put_data, trade_logic['index_direction'] in ['Put', 'Mixed'])
+    # Format trade data - ALL trades now use candlewise logic
+    index_call_formatted = format_trade_data(index_call_data, index_call_data['count'] > 0)
+    index_put_formatted = format_trade_data(index_put_data, index_put_data['count'] > 0)
     
     # Skip rows where both Index Call and Index Put have no data (0/0%/0/0%)
     if (index_call_formatted == "0/0%/0/0%" and index_put_formatted == "0/0%/0/0%"):
         return None
     
     # Calculate row total (aggregate of all active strategies)
+    # ALL trades now use candlewise filtering + overlap filtering
     row_total_data = calculate_row_total([
-        (index_call_data, trade_logic['index_direction'] in ['Call', 'Mixed']),
-        (index_put_data, trade_logic['index_direction'] in ['Put', 'Mixed']),
+        (index_call_data, index_call_data['count'] > 0),
+        (index_put_data, index_put_data['count'] > 0),
         (reversal_call_data, trade_logic['reversal_call']),
         (reversal_put_data, trade_logic['reversal_put'])
     ])

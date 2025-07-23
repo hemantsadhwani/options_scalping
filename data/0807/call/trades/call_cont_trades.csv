@@ -1,3 +1,0 @@
-Entry Time,Entry Price,Exit Time,Exit Price,P/L,P/L %,Exit Reason,Trade Type,Initial SL,Final SL,Highest High,Big Move
-2025-07-08 12:44:00,136.55,2025-07-08 13:09:00,136.55,0.00,0.00%,SL Hit,Call Option (Enhanced Hybrid Premium),128.36,136.55,144.85,False
-2025-07-08 14:48:00,129.95,2025-07-08 14:58:00,139.95,10.00,7.70%,Fixed TP (Average Signal),Call Option (Enhanced Hybrid Premium),122.15,129.95,144.60,False

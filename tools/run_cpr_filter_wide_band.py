@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def run_cpr_filter_wide_band(price_df, signals_df, trade_type_map, proximity_pct=0.04):
+def run_cpr_filter_wide_band(price_df, signals_df, trade_type_map, primary_proximity_pct=0.03, extended_proximity_pct=0.06):
     """
     Applies CPR filtering for wide CPR bands (>50) with separate S1/PDL and R1/PDH zones.
     
@@ -9,7 +9,8 @@ def run_cpr_filter_wide_band(price_df, signals_df, trade_type_map, proximity_pct
         price_df: DataFrame with price data and CPR levels
         signals_df: DataFrame with trading signals
         trade_type_map: Dictionary mapping signal columns to trade types
-        proximity_pct: Percentage for zone width (default 3%)
+        primary_proximity_pct: Percentage for primary zones (default 0.03%)
+        extended_proximity_pct: Percentage for extended zones (default 0.06%)
     
     Returns:
         DataFrame with added CPR filter columns
@@ -40,6 +41,10 @@ def run_cpr_filter_wide_band(price_df, signals_df, trade_type_map, proximity_pct
     # Initialize CPR filter columns
     for signal_col in trade_type_map.keys():
         signals_df[f'{signal_col}_crp'] = 0
+
+    if signals_df.empty:
+        print("No signals to process with wide band CPR filter.")
+        return signals_df
     
     print(f"Processing {len(signals_df)} signals with wide band CPR filter...")
     
@@ -59,23 +64,23 @@ def run_cpr_filter_wide_band(price_df, signals_df, trade_type_map, proximity_pct
                     candle_low = exact_candle['low'].values[0]
                     candle_high = exact_candle['high'].values[0]
                     
-                    # Pivot/TC Support Zone (only check LOW for this primary zone)
+                    # Pivot/TC Support Zone (only check LOW for this primary zone) - use primary proximity
                     if not passed and not pd.isna(pivot_val) and not pd.isna(tc_val):
                         zone_bottom = pivot_val
-                        zone_top = tc_val * (1 + proximity_pct / 100)
+                        zone_top = tc_val * (1 + primary_proximity_pct / 100)
                         if zone_bottom <= candle_low <= zone_top:
                             passed = True
                     
                     # All other levels treated as extended zones (PDL/S1/S2/S3/S4/PDH/R1/R2/R3/R4)
-                    # Check both HIGH and LOW for these zones
+                    # Check both HIGH and LOW for these zones - use extended proximity
                     if not passed:
                         extended_levels = [pdl_val, s1_val, s2_val, s3_val, s4_val, pdh_val, r1_val, r2_val, r3_val, r4_val]
                         level_names = ['PDL', 'S1', 'S2', 'S3', 'S4', 'PDH', 'R1', 'R2', 'R3', 'R4']
                         
                         for level_val, level_name in zip(extended_levels, level_names):
                             if not pd.isna(level_val):
-                                zone_bottom = level_val * (1 - proximity_pct / 100)
-                                zone_top = level_val * (1 + proximity_pct / 100)
+                                zone_bottom = level_val * (1 - extended_proximity_pct / 100)
+                                zone_top = level_val * (1 + extended_proximity_pct / 100)
                                 # Check both LOW and HIGH for Call trades in extended zones
                                 if (zone_bottom <= candle_low <= zone_top) or (zone_bottom <= candle_high <= zone_top):
                                     passed = True
@@ -85,23 +90,23 @@ def run_cpr_filter_wide_band(price_df, signals_df, trade_type_map, proximity_pct
                     candle_low = exact_candle['low'].values[0]
                     candle_high = exact_candle['high'].values[0]
                     
-                    # Pivot/BC Resistance Zone (only check HIGH for this primary zone)
+                    # Pivot/BC Resistance Zone (only check HIGH for this primary zone) - use primary proximity
                     if not passed and not pd.isna(pivot_val) and not pd.isna(bc_val):
-                        zone_bottom = bc_val * (1 - proximity_pct / 100)
+                        zone_bottom = bc_val * (1 - primary_proximity_pct / 100)
                         zone_top = pivot_val
                         if zone_bottom <= candle_high <= zone_top:
                             passed = True
                     
                     # All other levels treated as extended zones (PDL/S1/S2/S3/S4/PDH/R1/R2/R3/R4)
-                    # Check both HIGH and LOW for these zones
+                    # Check both HIGH and LOW for these zones - use extended proximity
                     if not passed:
                         extended_levels = [pdl_val, s1_val, s2_val, s3_val, s4_val, pdh_val, r1_val, r2_val, r3_val, r4_val]
                         level_names = ['PDL', 'S1', 'S2', 'S3', 'S4', 'PDH', 'R1', 'R2', 'R3', 'R4']
                         
                         for level_val, level_name in zip(extended_levels, level_names):
                             if not pd.isna(level_val):
-                                zone_bottom = level_val * (1 - proximity_pct / 100)
-                                zone_top = level_val * (1 + proximity_pct / 100)
+                                zone_bottom = level_val * (1 - extended_proximity_pct / 100)
+                                zone_top = level_val * (1 + extended_proximity_pct / 100)
                                 # Check both HIGH and LOW for Put trades in extended zones
                                 if (zone_bottom <= candle_high <= zone_top) or (zone_bottom <= candle_low <= zone_top):
                                     passed = True

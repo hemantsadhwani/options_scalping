@@ -20,7 +20,12 @@ def load_trade_config():
     try:
         config_path = os.path.join(os.path.dirname(__file__), 'trade_config.yaml')
         with open(config_path, 'r') as file:
-            return yaml.safe_load(file)
+            config = yaml.safe_load(file)
+            # Convert 'inf' string to float('inf')
+            for tier in config['PREMIUM_TIERS'].values():
+                if isinstance(tier['threshold'], str) and tier['threshold'].lower() == 'inf':
+                    tier['threshold'] = float('inf')
+            return config
     except Exception as e:
         print(f"Warning: Could not load trade_config.yaml: {e}")
         # Fallback to default values (updated to match the latest simulation config)

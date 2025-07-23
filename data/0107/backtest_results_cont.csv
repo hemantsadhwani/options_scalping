@@ -1,3 +1,0 @@
-date,type,comments,entry_time,exit_time,entry_price,exit_price,stop_loss_price,take_profit_price,pnl,exit_reason
-0107,Call,Continuation Strategy,2025-07-01 09:49:00,2025-07-01 09:54:00,163.75,152.2875,152.2875,175.2125,-11.462500000000006,Stop Loss (7%)
-0107,Put,Continuation Strategy,2025-07-01 13:34:00,2025-07-01 14:05:00,122.0,113.46,113.46,130.54000000000002,-8.540000000000006,Stop Loss (7%)

@@ -1,0 +1,30 @@
+{
+    "Tickers": [
+        {
+            "Ticker": "NTPC",
+            "start_date": "01-02-2024",
+            "end_date": "01-02-2024",
+            "interval": "60minute",
+            "buy_flag": true,
+            "sell_flag": true,
+            "optimize": true,
+            "window": 14,
+            "oversold_val": 30,
+            "overbought_val": 70,
+            "commission_val": 0.01
+        },
+        {
+            "Ticker": "VEDL",
+            "start_date": "01-02-2024",
+            "end_date": "01-02-2024",
+            "interval": "60minute",
+            "buy_flag": true,
+            "sell_flag": true,
+            "optimize": true,
+            "window": 14,
+            "oversold_val": 30,
+            "overbought_val": 70,
+            "commission_val": 0.01
+        }
+    ]
+}

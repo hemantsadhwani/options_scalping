@@ -17,7 +17,7 @@ def run_option_backtest(signals_df, option_df, date_str, config, strategy_name, 
         option_type: 'Call' or 'Put'
         signal_col: Column name to check for signals
     """
-    strategy_type = config['STRATEGY_TYPE']
+    strategy_type = config.get('TRADE_STRATEGY', 'COMPLEX')
     print(f"  Running option backtest for {date_str} ({option_type} Options - {strategy_name} / Type: {strategy_type})")
     
     eod_hour, eod_minute = map(int, config['EOD_EXIT_TIME'].split(':'))
@@ -47,41 +47,17 @@ def run_option_backtest(signals_df, option_df, date_str, config, strategy_name, 
             entry_row = entry_row_series.iloc[0]
             entry_price = entry_row['open']
 
-            exit_reason_text = {}
+            # Simplified logic to avoid dependency on old config structure
+            tp_percent = 15.0  # Generous TP for options
+            sl_percent = 10.0  # Generous SL for options
             
-            # Option-specific profit targets (higher due to volatility)
-            if strategy_type == 'FIXED_POINTS':
-                tp_points = config['FIXED_POINTS']['TAKE_PROFIT_POINTS'] * 2  # Double for options
-                take_profit_price = entry_price + tp_points
-                exit_reason_text['tp'] = f"Option Target Profit ({tp_points} pts)"
-            elif strategy_type == 'PERCENTAGE':
-                tp_percent = config['PERCENTAGE']['TAKE_PROFIT_PERCENT'] * 1.5  # 1.5x for options
-                take_profit_price = entry_price * (1 + tp_percent / 100)
-                exit_reason_text['tp'] = f"Option Target Profit ({tp_percent}%)"
-
-            # Option-specific stop loss (wider due to volatility)
-            sl_config = config[strategy_type]
-            if sl_config['STOP_LOSS_TYPE'] == 'SWING_LOW':
-                period = sl_config['SWING_LOW_PERIOD']
-                entry_idx = option_df.index.get_loc(entry_row.name)
-                start_idx = max(0, entry_idx - period)
-                lookback_window = option_df.iloc[start_idx:entry_idx]
-                if not lookback_window.empty:
-                    swing_low = lookback_window['low'].min()
-                    # For options, use a buffer below swing low
-                    stop_loss_price = swing_low * 0.95  # 5% buffer below swing low
-                    exit_reason_text['sl'] = f"Option Stop Loss (Swing Low of last {period} with buffer)"
-                else:
-                    stop_loss_price = entry_price * (1 - 0.15)  # 15% fallback for options
-                    exit_reason_text['sl'] = "Option Stop Loss (15% Fallback)"
-            elif sl_config['STOP_LOSS_TYPE'] == 'FIXED':
-                sl_points = sl_config['STOP_LOSS_POINTS'] * 1.5  # Wider for options
-                stop_loss_price = entry_price - sl_points
-                exit_reason_text['sl'] = f"Option Stop Loss ({sl_points} pts)"
-            elif sl_config['STOP_LOSS_TYPE'] == 'PERCENTAGE':
-                sl_percent = sl_config['STOP_LOSS_PERCENT'] * 2  # Double for options
-                stop_loss_price = entry_price * (1 - sl_percent / 100)
-                exit_reason_text['sl'] = f"Option Stop Loss ({sl_percent}%)"
+            take_profit_price = entry_price * (1 + tp_percent / 100)
+            stop_loss_price = entry_price * (1 - sl_percent / 100)
+            
+            exit_reason_text = {
+                'tp': f"Option Target Profit ({tp_percent}%)",
+                'sl': f"Option Stop Loss ({sl_percent}%)"
+            }
 
             # Trade exit logic for options
             exit_time, exit_price, exit_reason = None, None, None

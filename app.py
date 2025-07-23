@@ -2,7 +2,6 @@
 
 from tools.run_cpr_filter import run_cpr_filter
 from tools.run_cpr_filter_wide_band import run_cpr_filter_wide_band
-from option_tools.option_trade_executor import execute_option_trades as execute_trades
 from run_analytics import run_analysis
 from tools.clean_data_dir import clean_generated_files
 from strategies import (
@@ -15,7 +14,7 @@ from option_strategies import (
     generate_reversal_strategies_options,
     generate_reversal_strategies_v2_options
 )
-from option_tools import execute_option_trades, run_option_analysis, run_option_backtest, run_combined_option_backtest
+from option_tools import execute_option_trades, execute_index_trades, run_option_analysis, run_option_backtest, run_combined_option_backtest
 from run_process_data import run_process_data
 import yaml
 import pandas as pd
@@ -27,9 +26,9 @@ from tabulate import tabulate
 # Control which steps of the backtesting pipeline to execute
 run_cleanup = True          # Step 0: Clean generated files from previous runs
 run_step_1 = True          # Step 1: Process raw data and generate indicators
-run_step_2 = True          # Step 2: Generate continuation signals for index
+run_step_2 = False          # Step 2: Generate continuation signals for index
 run_step_3 = True          # Step 3: Generate first reversal signals for index
-run_step_4 = True        # Step 4: Generate second reversal signals for index
+run_step_4 = False        # Step 4: Generate second reversal signals for index
 run_step_5 = True          # Step 5: Apply CPR filter to index signals for Index
 run_step_6 = True          # Step 6: Execute trades on index signals (raw) for Index
 run_step_7 = True          # Step 7: Execute trades on CPR-filtered index signals for Index
@@ -104,32 +103,56 @@ def main():
             print(f"\n--- Processing Date: {date} ---")
             try:
                 price_data_file = f"./data/{date}/tradeview_utc.csv"
-                cont_signals_file = f"./data/{date}/tradeview_cont_output.csv"
-                rev_signals_file = f"./data/{date}/tradeview_rev_output.csv"
-
-                if not all(os.path.exists(f) for f in [price_data_file, cont_signals_file, rev_signals_file]):
-                    print(f"  - Skipping {date}, missing files for CPR filtering.")
+                if not os.path.exists(price_data_file):
+                    print(f"  - Skipping {date}, missing price data file.")
                     continue
 
                 price_df = pd.read_csv(price_data_file, encoding='utf-8-sig')
-                cont_signals_df = pd.read_csv(cont_signals_file, encoding='utf-8-sig')
-                rev_signals_df = pd.read_csv(rev_signals_file, encoding='utf-8-sig')
-
                 daily_tc = price_df['Daily TC'].iloc[0]
                 daily_bc = price_df['Daily BC'].iloc[0]
                 cpr_width = daily_tc - daily_bc if pd.notna(daily_tc) and pd.notna(daily_bc) else 0
-
-                trade_type_map_rev = {'Call': 'Call', 'Put': 'Put', 'Call_v2': 'Call', 'Put_v2': 'Put'}
-                trade_type_map_cont = {'Call': 'Call', 'Put': 'Put'}
-
                 filter_func = run_cpr_filter_wide_band if cpr_width > 50 else run_cpr_filter
                 print(f"  Using {'wide' if cpr_width > 50 else 'standard'} band CPR filter (CPR width: {cpr_width:.2f})")
-                
-                rev_signals_df_filtered = filter_func(price_df.copy(), rev_signals_df, trade_type_map_rev)
-                rev_signals_df_filtered.to_csv(rev_signals_file, index=False)
-                
-                cont_signals_df_filtered = filter_func(price_df.copy(), cont_signals_df, trade_type_map_cont)
-                cont_signals_df_filtered.to_csv(cont_signals_file, index=False)
+
+                # --- Process Reversal Signals ---
+                rev_signals_file = f"./data/{date}/tradeview_rev_output.csv"
+                if os.path.exists(rev_signals_file):
+                    rev_signals_df = pd.read_csv(rev_signals_file, encoding='utf-8-sig')
+                    
+                    # Dynamically create the trade type map based on existing columns
+                    trade_type_map_rev = {}
+                    if 'Call' in rev_signals_df.columns: trade_type_map_rev['Call'] = 'Call'
+                    if 'Put' in rev_signals_df.columns: trade_type_map_rev['Put'] = 'Put'
+                    if 'Call_v2' in rev_signals_df.columns: trade_type_map_rev['Call_v2'] = 'Call'
+                    if 'Put_v2' in rev_signals_df.columns: trade_type_map_rev['Put_v2'] = 'Put'
+
+                    if trade_type_map_rev:
+                        print(f"  - Applying CPR filter to reversal signals: {list(trade_type_map_rev.keys())}")
+                        rev_signals_df_filtered = filter_func(price_df.copy(), rev_signals_df, trade_type_map_rev)
+                        rev_signals_df_filtered.to_csv(rev_signals_file, index=False)
+                    else:
+                        print("  - No reversal signal columns found to filter.")
+                else:
+                    print(f"  - Skipping reversal signals, file not found.")
+
+                # --- Process Continuation Signals ---
+                cont_signals_file = f"./data/{date}/tradeview_cont_output.csv"
+                if os.path.exists(cont_signals_file):
+                    cont_signals_df = pd.read_csv(cont_signals_file, encoding='utf-8-sig')
+                    
+                    # Dynamically create the trade type map
+                    trade_type_map_cont = {}
+                    if 'Call' in cont_signals_df.columns: trade_type_map_cont['Call'] = 'Call'
+                    if 'Put' in cont_signals_df.columns: trade_type_map_cont['Put'] = 'Put'
+
+                    if trade_type_map_cont:
+                        print(f"  - Applying CPR filter to continuation signals: {list(trade_type_map_cont.keys())}")
+                        cont_signals_df_filtered = filter_func(price_df.copy(), cont_signals_df, trade_type_map_cont)
+                        cont_signals_df_filtered.to_csv(cont_signals_file, index=False)
+                    else:
+                        print("  - No continuation signal columns found to filter.")
+                else:
+                    print(f"  - Skipping continuation signals, file not found.")
 
             except Exception as e:
                 print(f"  ✗ ERROR processing {date} in Step 5: {str(e)}")
@@ -141,30 +164,40 @@ def main():
         for date in dates:
             trades_dir = f"./data/{date}/trades"
             try:
-                cont_signals_file = f"./data/{date}/tradeview_cont_output.csv"
-                rev_signals_file = f"./data/{date}/tradeview_rev_output.csv"
                 calls_file = f"./data/{date}/call/call_out.csv"
                 puts_file = f"./data/{date}/put/put_out.csv"
 
-                required_files = [calls_file, puts_file, cont_signals_file, rev_signals_file]
-                if not all(os.path.exists(f) for f in required_files):
-                    print(f"  - Skipping {date}, missing files for trade execution.")
+                if not all(os.path.exists(f) for f in [calls_file, puts_file]):
+                    print(f"  - Skipping {date}, missing call/put data files.")
                     continue
-
+                
                 calls_df = pd.read_csv(calls_file, encoding='utf-8-sig')
                 puts_df = pd.read_csv(puts_file, encoding='utf-8-sig')
-                cont_signals_df = pd.read_csv(cont_signals_file, encoding='utf-8-sig')
-                rev_signals_df = pd.read_csv(rev_signals_file, encoding='utf-8-sig')
 
-                execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call', 'Call', config, trades_dir, 'rev_v1_trades.csv')
-                execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put', 'Put', config, trades_dir, 'rev_v1_trades.csv')
-                execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_v2', 'Call', config, trades_dir, 'rev_v2_trades.csv')
-                execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_v2', 'Put', config, trades_dir, 'rev_v2_trades.csv')
-                execute_trades(cont_signals_df.copy(), calls_df.copy(), 'Call', 'Call', config, trades_dir, 'cont_trades.csv')
-                execute_trades(cont_signals_df.copy(), puts_df.copy(), 'Put', 'Put', config, trades_dir, 'cont_trades.csv')
+                # --- Execute Reversal Trades ---
+                rev_signals_file = f"./data/{date}/tradeview_rev_output.csv"
+                if os.path.exists(rev_signals_file):
+                    rev_signals_df = pd.read_csv(rev_signals_file, encoding='utf-8-sig')
+                    if 'Call' in rev_signals_df.columns:
+                        execute_index_trades(rev_signals_df.copy(), calls_df.copy(), 'Call', 'Call', config, trades_dir, 'rev_v1_trades.csv')
+                    if 'Put' in rev_signals_df.columns:
+                        execute_index_trades(rev_signals_df.copy(), puts_df.copy(), 'Put', 'Put', config, trades_dir, 'rev_v1_trades.csv')
+                    if 'Call_v2' in rev_signals_df.columns:
+                        execute_index_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_v2', 'Call', config, trades_dir, 'rev_v2_trades.csv')
+                    if 'Put_v2' in rev_signals_df.columns:
+                        execute_index_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_v2', 'Put', config, trades_dir, 'rev_v2_trades.csv')
+
+                # --- Execute Continuation Trades ---
+                cont_signals_file = f"./data/{date}/tradeview_cont_output.csv"
+                if os.path.exists(cont_signals_file):
+                    cont_signals_df = pd.read_csv(cont_signals_file, encoding='utf-8-sig')
+                    if 'Call' in cont_signals_df.columns:
+                        execute_index_trades(cont_signals_df.copy(), calls_df.copy(), 'Call', 'Call', config, trades_dir, 'cont_trades.csv')
+                    if 'Put' in cont_signals_df.columns:
+                        execute_index_trades(cont_signals_df.copy(), puts_df.copy(), 'Put', 'Put', config, trades_dir, 'cont_trades.csv')
 
             except Exception as e:
-                print(f"  ✗ ERROR processing {date} in Step 7: {str(e)}")
+                print(f"  ✗ ERROR processing {date} in Step 6: {str(e)}")
                 traceback.print_exc()
         print("\nStep 6 finished.\n")
 
@@ -173,30 +206,37 @@ def main():
         for date in dates:
             trades_dir_cpr = f"./data/{date}/trades_crp"
             try:
-                cont_signals_file = f"./data/{date}/tradeview_cont_output.csv"
-                rev_signals_file = f"./data/{date}/tradeview_rev_output.csv"
                 calls_file = f"./data/{date}/call/call_out.csv"
                 puts_file = f"./data/{date}/put/put_out.csv"
 
-                required_files = [calls_file, puts_file, cont_signals_file, rev_signals_file]
-                if not all(os.path.exists(f) for f in required_files):
-                    print(f"  - Skipping {date}, missing files for trade execution.")
+                if not all(os.path.exists(f) for f in [calls_file, puts_file]):
+                    print(f"  - Skipping {date}, missing call/put data files.")
                     continue
 
                 calls_df = pd.read_csv(calls_file, encoding='utf-8-sig')
                 puts_df = pd.read_csv(puts_file, encoding='utf-8-sig')
-                cont_signals_df = pd.read_csv(cont_signals_file, encoding='utf-8-sig')
-                rev_signals_df = pd.read_csv(rev_signals_file, encoding='utf-8-sig')
 
-                execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_crp', 'Call', config, trades_dir_cpr, 'rev_v1_trades.csv')
-                execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_crp', 'Put', config, trades_dir_cpr, 'rev_v1_trades.csv')
-                execute_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_v2', 'Call', config, trades_dir_cpr, 'rev_v2_trades.csv')
-                execute_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_v2', 'Put', config, trades_dir_cpr, 'rev_v2_trades.csv')
-                execute_trades(cont_signals_df.copy(), calls_df.copy(), 'Call_crp', 'Call', config, trades_dir_cpr, 'cont_trades.csv')
-                execute_trades(cont_signals_df.copy(), puts_df.copy(), 'Put_crp', 'Put', config, trades_dir_cpr, 'cont_trades.csv')
+                # --- Execute Reversal CPR Trades ---
+                rev_signals_file = f"./data/{date}/tradeview_rev_output.csv"
+                if os.path.exists(rev_signals_file):
+                    rev_signals_df = pd.read_csv(rev_signals_file, encoding='utf-8-sig')
+                    if 'Call_crp' in rev_signals_df.columns:
+                        execute_index_trades(rev_signals_df.copy(), calls_df.copy(), 'Call_crp', 'Call', config, trades_dir_cpr, 'rev_v1_trades.csv')
+                    if 'Put_crp' in rev_signals_df.columns:
+                        execute_index_trades(rev_signals_df.copy(), puts_df.copy(), 'Put_crp', 'Put', config, trades_dir_cpr, 'rev_v1_trades.csv')
+                    # No v2 for CPR filtered for now
+                
+                # --- Execute Continuation CPR Trades ---
+                cont_signals_file = f"./data/{date}/tradeview_cont_output.csv"
+                if os.path.exists(cont_signals_file):
+                    cont_signals_df = pd.read_csv(cont_signals_file, encoding='utf-8-sig')
+                    if 'Call_crp' in cont_signals_df.columns:
+                        execute_index_trades(cont_signals_df.copy(), calls_df.copy(), 'Call_crp', 'Call', config, trades_dir_cpr, 'cont_trades.csv')
+                    if 'Put_crp' in cont_signals_df.columns:
+                        execute_index_trades(cont_signals_df.copy(), puts_df.copy(), 'Put_crp', 'Put', config, trades_dir_cpr, 'cont_trades.csv')
 
             except Exception as e:
-                print(f"  ✗ ERROR processing {date} in Step 8: {str(e)}")
+                print(f"  ✗ ERROR processing {date} in Step 7: {str(e)}")
                 traceback.print_exc()
         print("\nStep 7 finished.\n")
 

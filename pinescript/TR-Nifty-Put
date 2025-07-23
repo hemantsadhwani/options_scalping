@@ -1,0 +1,424 @@
+//@version=5
+// ╔══════════════════════════════════════════════════════════════════════════════╗
+// ║ NIFTY Options Trading Strategy                                               ║
+// ║ Strategy combines Williams %R, Supertrend, and StochRSI                      ║
+// ║ With dynamic trailing stop loss and Dhan web integration                     ║
+// ╚══════════════════════════════════════════════════════════════════════════════╝
+
+strategy(
+  "Put-Trailing", 
+  overlay=true, 
+  initial_capital=1000000, 
+  pyramiding=1, 
+  default_qty_type=strategy.fixed, 
+  default_qty_value=1, 
+  commission_value=0.04,
+  calc_on_every_tick=true,
+  process_orders_on_close=false,  // Important for intracandle stops
+  close_entries_rule="ANY"
+  ) 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Option and Position Parameters
+// ═══════════════════════════════════════════════════════════════════════════════
+var strike_price = 22600
+var option_expiry = "2025-04-09"
+var option_type = "PE"
+
+FIXED_CAPITAL = 1000000.0
+NIFTY_LOT_SIZE = 75
+calculatedLotSize = close * NIFTY_LOT_SIZE
+maxLotsAllowed = math.floor(FIXED_CAPITAL / calculatedLotSize)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Time Management Parameters
+// ═══════════════════════════════════════════════════════════════════════════════
+startDateTime = timestamp("2025-07-18T00:09:14+0530")
+endDateTime = timestamp("2025-07-18T15:25+0530")
+isWithinDateRange = time >= startDateTime and time <= endDateTime
+
+isWithinTradingHours = na(time_close) ? false : (
+  hour == 9 ? minute >= 15 :
+  hour == 15 ? minute <= 14 :
+  hour > 9 and hour < 15)
+
+isForceCloseTime = hour == 15 and minute >= 14
+inTradeWindow = isWithinTradingHours and isWithinDateRange and not isForceCloseTime
+// ═══════════════════════════════════════════════════════════════════════════════
+// Other strategy Parameters
+// ═══════════════════════════════════════════════════════════════════════════════
+WAIT_BARS_SLOW = 2
+WAIT_BARS_RSI = 2 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Stop/Trailing Loss Parameters
+// ═══════════════════════════════════════════════════════════════════════════════
+atrPeriod = 5  // Reduced from 14 to 5 for higher sensitivity to volatility
+atrMultiplier =2.2  // Adjust this multiplier based on your risk tolerance
+// Add after the Stop/Trailing Loss Parameters section
+getPremiumBasedTrail(float premium, float profitPercent) =>
+    float trailAmount = 0.0
+    if premium >= 250  // High premium options
+        if profitPercent >= 50
+            trailAmount := premium * 0.08
+        else if profitPercent >= 30
+            trailAmount := premium * 0.10
+        else
+            trailAmount := premium * 0.04
+    else if premium >= 150  // Medium premium options
+        if profitPercent >= 50
+            trailAmount := premium * 0.10
+        else if profitPercent >= 30
+            trailAmount := premium * 0.10
+        else
+            trailAmount := premium * 0.08
+    else  // Low premium options
+        if profitPercent > 50
+            trailAmount := premium * 0.12
+        else if profitPercent > 20
+            trailAmount := premium * 0.15
+        else
+            trailAmount := premium * 0.10
+    trailAmount
+
+getHybridStop(float currentPrice, float highestPrice, float entryPrice, float atr) =>
+    float profitPercent = ((currentPrice - entryPrice) / entryPrice) * 100
+    float premiumBasedStop = highestPrice - getPremiumBasedTrail(entryPrice, profitPercent)
+    float atrBasedStop = highestPrice - (atrMultiplier * atr)
+    math.min(premiumBasedStop, atrBasedStop)
+// ═══════════════════════════════════════════════════════════════════════════════
+// Supertrend Calculations
+// ═══════════════════════════════════════════════════════════════════════════════
+[supertrend, direction] = ta.supertrend(3.0, 10)
+isBullish = direction < 0
+isBearish = direction > 0
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Technical Indicators
+// ═══════════════════════════════════════════════════════════════════════════════
+// Stochastic RSI
+rsiValue = ta.rsi(close, 14)
+rsiHighest = ta.highest(rsiValue, 14)
+rsiLowest = ta.lowest(rsiValue, 14)
+stochRsi = (rsiValue - rsiLowest) / (rsiHighest - rsiLowest) * 100
+stochK = ta.sma(stochRsi, 3)
+stochD = ta.sma(stochK, 3)
+//Reversal
+stochCrossoverConditionExt = (stochK > stochD) and stochK > 20  
+stochCrossoverCondition = (stochK[1] < 20) and (stochK > 20)
+stochExitCondition = ta.crossunder(stochK, stochD) and stochK > 60
+
+// Add this after your Stochastic RSI calculations
+var string stochDirection = "none"  // Can be "overbought", "oversold", or "none"
+// Update the direction based on StochK values
+if (stochD > 80)
+    stochDirection := "overbought"
+if (stochD < 20 and stochDirection == "overbought")
+    stochDirection := "oversold"
+if (stochD > 80 and stochDirection == "oversold")
+    stochDirection := "overbought"
+    
+// Moving Average Calculations
+ema15 = ta.ema(close, 15)
+ema9 = ta.ema(close, 9)
+
+// Detect crossovers
+crossover = ta.crossover(ema15, ema9)
+crossunder = ta.crossunder(ema15, ema9)
+
+// Determine trend based on MA relationship
+isMaBullish = ema15 < ema9  // Bullish condition
+isMaBearish = ema15 > ema9  // Bearish condition
+
+// Williams %R
+williamsRFast = ta.wpr(9)
+williamsRSlow = ta.wpr(28)
+
+var bool fastCrossoverDetected = false
+var int fastCrossoverBarIndex = na
+var bool slowCrossoverDetected = false
+var int slowCrossoverBarIndex = na
+
+isFastCrossoverAbove80 = (williamsRFast[1] < -80) and (williamsRFast > -80)
+isSlowCrossoverAbove80 = (williamsRSlow[1] < -80) and (williamsRSlow > -80)
+// Swing Low
+swingLow = ta.lowest(low, 5)
+
+if isFastCrossoverAbove80
+    fastCrossoverDetected := true
+    fastCrossoverBarIndex := bar_index
+  
+if fastCrossoverDetected and (bar_index > fastCrossoverBarIndex + WAIT_BARS_SLOW) 
+    fastCrossoverDetected := false
+    fastCrossoverBarIndex := na
+
+if isSlowCrossoverAbove80
+    slowCrossoverDetected := true
+    slowCrossoverBarIndex := bar_index
+  
+if slowCrossoverDetected and (bar_index > slowCrossoverBarIndex + WAIT_BARS_RSI) and not stochCrossoverConditionExt
+    slowCrossoverDetected := false
+    slowCrossoverBarIndex := na
+
+stochReversalMet = slowCrossoverDetected and 
+                       stochCrossoverConditionExt and 
+                       (bar_index <= slowCrossoverBarIndex + WAIT_BARS_RSI)
+
+// if slowCrossoverDetected and (bar_index > slowCrossoverBarIndex + WAIT_BARS_RSI) and not isMaBullish
+//     slowCrossoverDetected := false
+//     slowCrossoverBarIndex := na
+    
+// stochContinuationMet = slowCrossoverDetected and 
+//                        isMaBullish and 
+//                        (bar_index <= slowCrossoverBarIndex + WAIT_BARS_RSI)
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Alert Message Generator
+// ═══════════════════════════════════════════════════════════════════════════════
+generate_alert_message(action, qty, option_type, strike_price, expiry_date) => 
+    '{"secret":"IVpyR","alertType":"multi_leg_order","order_legs":[{"transactionType":"' +
+     action + '","orderType":"MKT","quantity":"' + str.tostring(qty) + 
+     '","exchange":"NSE","symbol":"NIFTY","instrument":"OPT","productType":"I","sort_order":"1","price":"0","option_type":"' + 
+     option_type + '","strike_price":"' + str.tostring(strike_price) + 
+     '","expiry_date":"' + expiry_date + '"}]}'
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Entry Conditions
+// ═══════════════════════════════════════════════════════════════════════════════
+swingLowRisk = ((close - swingLow) / close) * 100
+supertrendRisk = ((close - supertrend) / close) * 100 
+
+var int lastStopLossBar = na
+var bool waitingAfterStopLoss = false
+
+// Reversal 
+entryCondition1 = stochReversalMet and 
+  isBearish and
+  strategy.position_size == 0 and 
+  swingLow < close and
+  not waitingAfterStopLoss
+
+entryCondition2 = stochCrossoverCondition and 
+  isBullish and
+  isMaBullish and
+  strategy.position_size == 0 and
+  swingLow < close
+// ═══════════════════════════════════════════════════════════════════════════════
+// Position Management Variables
+// ═══════════════════════════════════════════════════════════════════════════════
+
+var float fixedStopLoss = na
+var float trailingStop = na
+var float entryPrice = na
+var float highestPrice = na
+var bool wasInPosition = false
+var float stopLevel = na  // Add this line
+var bool isTrailing = false
+var bool isTrailingActive = false
+
+// Add trend transition tracking
+var bool previousIsBearish = false
+var bool trendTransitionOccurred = false
+var float takeProfitLevel = na
+
+var bool enteredOnCondition1 = false
+var bool enteredOnCondition2 = false
+var bool enteredOnCondition3 = false
+
+var float stopLossPercent = 5.0  // 5% stop loss
+float trailingStartPercent = 5.0
+var bool needsReset = false
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Strategy Execution
+// ═══════════════════════════════════════════════════════════════════════════════
+if (entryCondition1 or entryCondition2) and inTradeWindow and strategy.position_size == 0 and not needsReset
+    strategy.entry("Long", strategy.long, qty=maxLotsAllowed, when=barstate.isconfirmed)
+    entryPrice := close
+    float swingLowStop = swingLow
+    float percentStop = close * (1 - stopLossPercent/100)
+    fixedStopLoss := math.min(swingLowStop, percentStop)
+    trailingStop := fixedStopLoss
+    highestPrice := close
+    isTrailing := false
+    isTrailingActive := false
+    stopLevel := fixedStopLoss
+    previousIsBearish := false
+    enteredOnCondition1 := true
+    alert(generate_alert_message("BUY", maxLotsAllowed, option_type, strike_price, option_expiry), alert.freq_once_per_bar_close)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Position Management entryCondition2
+// ═══════════════════════════════════════════════════════════════════════════════
+if strategy.position_size > 0 and (enteredOnCondition1 or entryCondition2)
+    wasInPosition := true
+    currentProfit = ((close - entryPrice) / entryPrice) * 100
+    atr = ta.atr(atrPeriod)
+    atrStop = atrMultiplier * atr
+
+    // Activate trailing stop when profit reaches trailingStartPercent
+    if currentProfit >= trailingStartPercent
+        isTrailingActive := true
+
+    // Update trailing stop if active
+    if isTrailingActive
+        if close > highestPrice
+            highestPrice := close
+            // newTrailingStop = highestPrice - atrStop
+            newTrailingStop = getHybridStop(close, highestPrice, entryPrice, atr)
+            if newTrailingStop > trailingStop
+                trailingStop := newTrailingStop
+                stopLevel := trailingStop
+        else
+            stopLevel := trailingStop
+    else
+        // Before trailing is activated, use a wider ATR stop
+        // initialAtrStop = highestPrice - (atrMultiplier * 0.5 * atr)
+        // fixedStopLoss := math.min(fixedStopLoss, initialAtrStop)
+        stopLevel := fixedStopLoss
+
+    // Check for stop loss hit
+    if low <= stopLevel
+        strategy.close_all(comment="Stop/Trail Hit @ " + str.tostring(currentProfit, "#.##") + "%", immediately=true)
+        alert(generate_alert_message("SELL", maxLotsAllowed, option_type, strike_price, option_expiry), alert.freq_once_per_bar)
+        needsReset := true
+        lastStopLossBar := bar_index
+        waitingAfterStopLoss := true
+
+// Add this code to handle the waiting period
+if waitingAfterStopLoss and (bar_index > lastStopLossBar + WAIT_BARS_RSI)
+    waitingAfterStopLoss := false
+
+// Reset logic - place this after all position management code
+if needsReset or (strategy.position_size == 0 and wasInPosition)
+    fixedStopLoss := na
+    trailingStop := na
+    entryPrice := na
+    highestPrice := na
+    wasInPosition := false
+    stopLevel := na
+    isTrailing := false
+    isTrailingActive := false
+    enteredOnCondition1 := false
+    enteredOnCondition2 := false
+    fastCrossoverDetected := false
+    slowCrossoverDetected := false
+    slowCrossoverBarIndex := na
+    stochDirection := "none"
+    previousIsBearish := false
+    trendTransitionOccurred := false
+    needsReset := false
+    waitingAfterStopLoss := false
+    lastStopLossBar := na
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Force Close at End of Day
+// ═══════════════════════════════════════════════════════════════════════════════
+if strategy.position_size > 0 and isForceCloseTime 
+    alert(generate_alert_message("SELL", maxLotsAllowed, option_type, strike_price, option_expiry), alert.freq_once_per_bar)
+    strategy.close_all(comment="EOD Square Off", immediately=true)
+    // Reset all flags
+    fixedStopLoss := na
+    trailingStop := na
+    entryPrice := na
+    highestPrice := na
+    wasInPosition := false
+    stopLevel := na
+    isTrailing := false
+    isTrailingActive := false
+    enteredOnCondition1 := false
+    enteredOnCondition2 := false
+    fastCrossoverDetected := false
+    stochDirection := "none"
+    previousIsBearish := false
+    trendTransitionOccurred := false
+// ═══════════════════════════════════════════════════════════════════════════════
+// Plotting
+// ═══════════════════════════════════════════════════════════════════════════════
+// Plotting section
+atr = ta.atr(atrPeriod)
+// Plot fixed stop loss whenever in position and not trailing
+plot(strategy.position_size > 0 and not isTrailingActive ? fixedStopLoss : na, 
+     "Fixed Stop Loss", 
+     color=color.red, 
+     style=plot.style_linebr, 
+     linewidth=2)
+
+// Plot trailing stop when active
+plot(strategy.position_size > 0 and isTrailingActive ? stopLevel : na, 
+     "Trailing Stop", 
+     color=color.purple, 
+     style=plot.style_linebr, 
+     linewidth=2)
+
+
+plot(isBullish ? supertrend : na, "Up Trend Current", color=color.green, style=plot.style_linebr)
+plot(isBearish ? supertrend : na, "Down Trend Current", color=color.red, style=plot.style_linebr)
+
+
+plotshape(entryCondition1 and inTradeWindow, "Entry", shape.triangleup, location.belowbar, color.purple, size=size.tiny)
+// plotshape(entryCondition2 and inTradeWindow, "Entry", shape.triangleup, location.belowbar, color.red, size=size.tiny)
+// plotshape(entryCondition3 and inTradeWindow, "Entry", shape.triangleup, location.belowbar, color.blue, size=size.tiny)
+
+//-----------------------------//
+// //NIFTY Status Bullish/Bearish Plotting
+// plotchar(isNiftyBullish, "Bullish Difference", "•", location.top, color.green, size=size.tiny)
+// plotchar(isNiftyBearish, "Bearish Difference", "•", location.top, color.red, size=size.tiny)
+
+//NIFTY Higher Timeframe Bullish/Bearish Plotting
+// var float lastConfirmedUp = na
+// var float lastConfirmedDown = na
+
+// if barstate.isconfirmed
+//     lastConfirmedUp := confirmedDirection5m < 0 ? confirmedSupertrend5m : na
+//     lastConfirmedDown := confirmedDirection5m > 0 ? confirmedSupertrend5m : na
+
+// upTrend = plot(lastConfirmedUp, "Up Trend 5m", 
+//      color=color.green, 
+//      style=plot.style_linebr,
+//      linewidth=2)
+
+// downTrend = plot(lastConfirmedDown, "Down Trend 5m", 
+//      color=color.red, 
+//      style=plot.style_linebr,
+//      linewidth=2)
+
+// bodyMiddle = plot(barstate.isfirst ? na : (open + close) / 2, 
+//      "Body Middle", 
+//      display=display.none)
+
+// fill(bodyMiddle, upTrend, color.new(color.green, 80), fillgaps=false)
+// fill(bodyMiddle, downTrend, color.new(color.red, 80), fillgaps=false)
+
+// // Add this after your existing plotting section
+// var label prevLabel = na
+// var label diffLabel = na
+
+// // Delete previous labels to avoid overcrowding
+// if not na(prevLabel)
+//     label.delete(prevLabel)
+// if not na(diffLabel)
+//     label.delete(diffLabel)
+
+// // Create new labels with the values
+// prevLabel := label.new(
+//   x=bar_index, 
+//   y=high + (high * 0.001), 
+//   text="Prev: " + str.tostring(prevDayClose, "#.##") + "\nCur: " + str.tostring(curCandleClose, "#.##"),
+//   color=color.new(color.blue, 80),
+//   style=label.style_label_down,
+//   textcolor=color.white
+//   )
+
+// diffLabel := label.new(
+//   x=bar_index, 
+//   y=low - (low * 0.001), 
+//   text="Diff: " + str.tostring(difference, "#.##"),
+//   color=color.new(color.purple, 80),
+//   style=label.style_label_up,
+//   textcolor=color.white
+//   )
+
+// Plot single MA line with dynamic color
+maColor = isMaBullish ? color.green : color.red
+plot(ema15, title="SMA 21", color=maColor, linewidth=2)

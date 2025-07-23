@@ -1,0 +1,23 @@
+# Configuration for the Two-Phase ATR Trailing Stop Strategy
+
+# 1. Required Indicators
+INDICATORS:
+  ATR_PERIOD: 5
+  SWING_LOW_PERIOD: 5
+
+# 2. Stop-Loss System Parameters
+STOP_LOSS:
+  # Phase 1: Initial Fixed Stop-Loss
+  INITIAL_FIXED_SL_PERCENT: 5.0
+
+  # Phase 2: Dynamic ATR Trailing Stop
+  TRAILING_ACTIVATION_PROFIT_PERCENT: 0.0
+
+  # ATR Multiplier "Slab" System based on profit
+  ATR_MULTIPLIERS:
+    - profit_threshold: 10.0  # For profit < 10%
+      multiplier: 1.8
+    - profit_threshold: 25.0  # For 10% <= profit < 25%
+      multiplier: 2.2
+    - profit_threshold: 9999.0 # For profit >= 25%
+      multiplier: 3.0
